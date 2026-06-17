@@ -27,14 +27,17 @@ export function ProductActions({
 
   const message = `Bonjour ${site.name}, je souhaite commander le produit "${productName}" (marque ${brandName}). Merci de me recontacter.`;
   const waHref = whatsappLink(message);
+  const hasBrochure = !!brochure;
 
   return (
     <>
       <div className="flex flex-col gap-3 sm:flex-row">
-        <button onClick={() => setOpen(true)} className="btn-outline flex-1">
-          <DownloadIcon className="h-5 w-5" />
-          {t("downloadBrochure")}
-        </button>
+        {hasBrochure && (
+          <button onClick={() => setOpen(true)} className="btn-outline flex-1">
+            <DownloadIcon className="h-5 w-5" />
+            {t("downloadBrochure")}
+          </button>
+        )}
         <a
           href={waHref}
           target="_blank"
@@ -45,7 +48,7 @@ export function ProductActions({
           {t("orderWhatsApp")}
         </a>
       </div>
-      {open && (
+      {hasBrochure && open && (
         <BrochureModal
           productName={productName}
           productSlug={productSlug}
