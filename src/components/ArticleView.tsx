@@ -62,6 +62,11 @@ export function ArticleView({ article, more }: { article: Article; more: Article
               Télécharger le PDF
             </a>
           </div>
+          <iframe
+            src={article.pdf}
+            title={`Document : ${article.title}`}
+            className="h-[75vh] w-full rounded-lg border border-outline-variant bg-clinical-white"
+          />
           <a
             href={article.pdf}
             target="_blank"
