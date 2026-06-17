@@ -8,20 +8,25 @@ import { Logo } from "@/components/Logo";
 export default function AdminLoginPage() {
   const router = useRouter();
   const { authed, login } = useAuth();
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    if (authed) router.replace("/admin");
+    if (authed === true) router.replace("/admin");
   }, [authed, router]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (login(username, password)) {
-      router.replace("/admin");
+    setBusy(true);
+    setError(null);
+    const err = await login(email, password);
+    setBusy(false);
+    if (err) {
+      setError("Email ou mot de passe incorrect.");
     } else {
-      setError(true);
+      router.replace("/admin");
     }
   };
 
@@ -38,18 +43,18 @@ export default function AdminLoginPage() {
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div>
-            <label htmlFor="username" className="mb-1 block font-mono text-label-caps uppercase text-on-surface-variant">
-              Identifiant
+            <label htmlFor="email" className="mb-1 block font-mono text-label-caps uppercase text-on-surface-variant">
+              Email
             </label>
             <input
-              id="username"
-              type="text"
+              id="email"
+              type="email"
               required
               autoComplete="username"
-              value={username}
+              value={email}
               onChange={(e) => {
-                setUsername(e.target.value);
-                setError(false);
+                setEmail(e.target.value);
+                setError(null);
               }}
               className="w-full rounded border border-outline-variant bg-clinical-white px-3 py-2.5 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/30"
             />
@@ -66,26 +71,20 @@ export default function AdminLoginPage() {
               value={password}
               onChange={(e) => {
                 setPassword(e.target.value);
-                setError(false);
+                setError(null);
               }}
               className="w-full rounded border border-outline-variant bg-clinical-white px-3 py-2.5 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/30"
             />
           </div>
 
           {error && (
-            <p className="rounded bg-error/10 px-3 py-2 text-sm text-error">
-              Identifiant ou mot de passe incorrect.
-            </p>
+            <p className="rounded bg-error/10 px-3 py-2 text-sm text-error">{error}</p>
           )}
 
-          <button type="submit" className="btn-solid mt-2 w-full">
-            Se connecter
+          <button type="submit" disabled={busy} className="btn-solid mt-2 w-full disabled:opacity-60">
+            {busy ? "Connexion…" : "Se connecter"}
           </button>
         </form>
-
-        <p className="mt-6 text-center text-xs text-on-surface-variant">
-          Démo : <span className="font-mono">admin</span> / <span className="font-mono">ophtahealth2024</span>
-        </p>
       </div>
     </div>
   );

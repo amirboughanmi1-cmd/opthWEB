@@ -3,10 +3,21 @@ export interface Brand {
   name: string;
   /** Logo path under /public, or null when no logo asset is available yet. */
   logo: string | null;
+  /**
+   * Official OphtaHealth partner. Only partners appear in the homepage
+   * brand strip and the brand filter/search. Non-partners (e.g. a manufacturer
+   * we merely resell from) keep their products but stay out of those lists.
+   * Treat `undefined` as a partner (back-compat for the static fallback).
+   */
+  isPartner?: boolean;
 }
 
+/** A brand counts as a partner unless it is explicitly flagged otherwise. */
+export const isPartnerBrand = (b: Brand) => b.isPartner !== false;
+
 /**
- * Partner brands distributed by OphtaHealth — all 11 now have logo assets.
+ * Partner brands distributed by OphtaHealth — all 11 have logo assets.
+ * (Huvitz lives only in the DB and is flagged as a non-partner.)
  */
 export const brands: Brand[] = [
   { slug: "rodenstock", name: "Rodenstock", logo: "/sponsors/rodenstock.png" },

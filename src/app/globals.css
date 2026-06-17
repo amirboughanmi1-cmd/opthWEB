@@ -17,6 +17,30 @@ body {
   text-rendering: optimizeLegibility;
 }
 
+/* ──────────────────────────────────────────────────────────────
+   Client request: visitors must not be able to select/copy text.
+   Disabled site-wide, but re-enabled for anything the user must be
+   able to type into (search box, lead/brochure forms, admin panel)
+   so the site and dashboard stay fully usable.
+   ────────────────────────────────────────────────────────────── */
+body {
+  -webkit-user-select: none; /* Safari / iOS */
+  -moz-user-select: none; /* Firefox */
+  -ms-user-select: none; /* old Edge / IE */
+  user-select: none;
+  -webkit-touch-callout: none; /* iOS long-press selection menu */
+}
+
+input,
+textarea,
+select,
+[contenteditable="true"] {
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
+  user-select: text;
+}
+
 /* Respect reduced motion preferences (a11y) */
 @media (prefers-reduced-motion: reduce) {
   *,

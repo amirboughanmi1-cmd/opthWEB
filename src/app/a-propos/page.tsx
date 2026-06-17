@@ -1,87 +1,73 @@
-"use client";
-
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { PageHeader } from "@/components/PageHeader";
-import { brands } from "@/data/brands";
-import { products } from "@/data/products";
-import { sections } from "@/data/categories";
+import { getCatalog } from "@/lib/server-data";
+import { isPartnerBrand } from "@/data/brands";
 import { CheckIcon } from "@/components/Icons";
-import { useLang, pick } from "@/i18n/LanguageProvider";
 import { t } from "@/i18n/ui";
 
-export default function AboutPage() {
-  const { lang } = useLang();
+export const metadata: Metadata = {
+  title: "À Propos",
+  description:
+    "OphtaHealth, distributeur d'équipements médicaux ophtalmiques. Notre mission, nos valeurs et nos marques partenaires de renom.",
+};
 
-  const values = [
-    {
-      title: pick(lang, "Précision clinique", "Clinical precision"),
-      text: pick(
-        lang,
-        "Des instruments de diagnostic de haute fidélité pour des résultats fiables et reproductibles.",
-        "High-fidelity diagnostic instruments for reliable, reproducible results."
-      ),
-    },
-    {
-      title: pick(lang, "Marques de confiance", "Trusted brands"),
-      text: pick(
-        lang,
-        "Nous représentons des fabricants de renommée mondiale, sélectionnés pour leur qualité.",
-        "We represent world-renowned manufacturers, selected for their quality."
-      ),
-    },
-    {
-      title: pick(lang, "Support technique", "Technical support"),
-      text: pick(
-        lang,
-        "Une équipe d'ingénieurs dédiée à l'installation, la maintenance et la formation.",
-        "A team of engineers dedicated to installation, maintenance and training."
-      ),
-    },
-  ];
+const values = [
+  {
+    title: "Précision clinique",
+    text: "Des instruments de diagnostic de haute fidélité pour des résultats fiables et reproductibles.",
+  },
+  {
+    title: "Marques de confiance",
+    text: "Nous représentons des fabricants de renommée mondiale, sélectionnés pour leur qualité.",
+  },
+  {
+    title: "Support technique",
+    text: "Une équipe d'ingénieurs dédiée à l'installation, la maintenance et la formation.",
+  },
+];
 
+/** ISR safety net — the admin dashboard revalidates on-demand after writes. */
+export const revalidate = 3600;
+
+export default async function AboutPage() {
+  const { brands, products, sections } = await getCatalog();
+  const partnerBrands = brands.filter(isPartnerBrand);
   return (
     <>
       <PageHeader
-        eyebrow={pick(lang, "Qui sommes-nous", "Who we are")}
-        title={pick(lang, "À Propos d'OphtaHealth", "About OphtaHealth")}
-        subtitle={pick(
-          lang,
-          "Spécialiste de la distribution d'équipements médicaux ophtalmiques pour les professionnels de la santé visuelle.",
-          "Specialist in the distribution of ophthalmic medical equipment for eye care professionals."
-        )}
+        eyebrow="Qui sommes-nous"
+        title="À Propos d'OphtaHealth"
+        subtitle="Spécialiste de la distribution d'équipements médicaux ophtalmiques pour les professionnels de la santé visuelle."
       />
 
       {/* Mission */}
       <section className="container-max grid grid-cols-1 items-center gap-12 py-16 md:grid-cols-2">
         <div>
-          <h2 className="mb-6 font-display text-headline-lg text-primary-container">{pick(lang, "Notre Mission", "Our Mission")}</h2>
+          <h2 className="mb-6 font-display text-headline-lg text-primary-container">Notre Mission</h2>
           <p className="mb-4 leading-relaxed text-on-surface-variant">
-            {pick(
-              lang,
-              "OphtaHealth est une société spécialisée dans la distribution d'équipements médicaux ophtalmiques. Nous représentons plusieurs marques partenaires de renom et proposons un catalogue structuré d'appareils destinés aux professionnels de la santé visuelle.",
-              "OphtaHealth is a company specialized in the distribution of ophthalmic medical equipment. We represent several renowned partner brands and offer a structured catalog of devices for eye care professionals."
-            )}
+            OphtaHealth est une société spécialisée dans la distribution d'équipements médicaux
+            ophtalmiques. Nous représentons plusieurs marques partenaires de renom et proposons un
+            catalogue structuré d'appareils destinés aux professionnels de la santé visuelle.
           </p>
           <p className="leading-relaxed text-on-surface-variant">
-            {pick(
-              lang,
-              "Notre engagement : faire le lien entre l'ingénierie technologique de pointe et la pratique clinique quotidienne, afin de garantir précision, fiabilité et de meilleurs résultats pour les patients.",
-              "Our commitment: to bridge cutting-edge engineering and everyday clinical practice, ensuring precision, reliability and better patient outcomes."
-            )}
+            Notre engagement : faire le lien entre l'ingénierie technologique de pointe et la
+            pratique clinique quotidienne, afin de garantir précision, fiabilité et de meilleurs
+            résultats pour les patients.
           </p>
         </div>
         <div className="grid grid-cols-3 gap-4 text-center">
-          <Stat value={`${brands.length}+`} label={pick(lang, "Marques", "Brands")} />
-          <Stat value={`${products.length}`} label={pick(lang, "Produits", "Products")} />
-          <Stat value={`${sections.length}`} label={pick(lang, "Sections", "Sections")} />
+          <Stat value={`${partnerBrands.length}+`} label="Marques" />
+          <Stat value={`${products.length}`} label="Produits" />
+          <Stat value={`${sections.length}`} label="Sections" />
         </div>
       </section>
 
       {/* Values */}
       <section className="border-y border-outline-variant bg-surface-gray px-margin-edge py-16">
         <div className="mx-auto max-w-container-max">
-          <h2 className="section-title mb-12">{pick(lang, "Nos Valeurs", "Our Values")}</h2>
+          <h2 className="section-title mb-12">Nos Valeurs</h2>
           <div className="grid grid-cols-1 gap-gutter md:grid-cols-3">
             {values.map((v) => (
               <div key={v.title} className="rounded-lg border border-outline-variant bg-clinical-white p-6">
@@ -98,9 +84,9 @@ export default function AboutPage() {
 
       {/* Partners */}
       <section className="container-max py-16">
-        <h2 className="section-title mb-12">{t(lang, "partnerBrands")}</h2>
+        <h2 className="section-title mb-12">{t("partnerBrands")}</h2>
         <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-          {brands.map((b) => (
+          {partnerBrands.map((b) => (
             <div key={b.slug} className="flex h-28 items-center justify-center rounded-lg border border-outline-variant bg-clinical-white p-4">
               {b.logo ? (
                 <Image src={b.logo} alt={b.name} width={150} height={70} className="max-h-full w-auto object-contain" />
@@ -115,16 +101,12 @@ export default function AboutPage() {
       {/* CTA */}
       <section className="border-t border-outline-variant bg-surface-gray px-margin-edge py-16 text-center">
         <h2 className="mb-4 font-display text-headline-lg text-primary-container">
-          {pick(lang, "Vous avez un projet d'équipement ?", "Have an equipment project?")}
+          Vous avez un projet d'équipement ?
         </h2>
         <p className="mx-auto mb-8 max-w-xl text-on-surface-variant">
-          {pick(
-            lang,
-            "Notre équipe est à votre disposition pour vous conseiller et vous accompagner.",
-            "Our team is available to advise and support you."
-          )}
+          Notre équipe est à votre disposition pour vous conseiller et vous accompagner.
         </p>
-        <Link href="/support" className="btn-solid">{t(lang, "contactUs")}</Link>
+        <Link href="/support" className="btn-solid">{t("contactUs")}</Link>
       </section>
     </>
   );

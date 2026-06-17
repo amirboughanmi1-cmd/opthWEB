@@ -1,20 +1,19 @@
 "use client";
 
 import Image from "next/image";
-import { brands } from "@/data/brands";
-import { useLang } from "@/i18n/LanguageProvider";
+import { isPartnerBrand, type Brand } from "@/data/brands";
 import { t } from "@/i18n/ui";
 
 /** Auto-scrolling partner logo marquee. Logos duplicated for a seamless loop. */
-export function BrandStrip() {
-  const { lang } = useLang();
-  const withLogos = brands.filter((b) => b.logo);
+export function BrandStrip({ brands }: { brands: Brand[] }) {
+  // Only official partners appear in the homepage strip.
+  const withLogos = brands.filter((b) => b.logo && isPartnerBrand(b));
   const loop = [...withLogos, ...withLogos];
 
   return (
     <section className="w-full overflow-hidden border-b border-outline-variant bg-surface-gray py-12">
       <div className="container-max mb-8">
-        <h2 className="section-title">{t(lang, "partnerBrands")}</h2>
+        <h2 className="section-title">{t("partnerBrands")}</h2>
       </div>
       <div className="relative flex w-full overflow-hidden">
         <div className="flex animate-scroll items-center gap-6 px-6 whitespace-nowrap">

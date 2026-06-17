@@ -8,26 +8,28 @@ import {
   useAdminData,
   saveProduct,
   deleteProduct,
-  toggleStock,
   saveBrand,
   deleteBrand,
   saveCategory,
   deleteCategory,
   addType,
   deleteType,
+  saveArticle,
+  deleteArticle,
   deleteLead,
   slugify,
   type Product,
   type Brand,
   type Section,
+  type Article,
 } from "@/lib/store";
+import { STANDALONE_SECTIONS } from "@/data/categories";
+import { uploadToImageKit } from "@/lib/uploadToImageKit";
 import { Logo } from "@/components/Logo";
 import {
   PlusIcon,
   PencilIcon,
   TrashIcon,
-  EyeIcon,
-  EyeOffIcon,
   LogoutIcon,
   BoxIcon,
   TagIcon,
@@ -40,7 +42,7 @@ import {
 const inputCls =
   "w-full rounded border border-outline-variant bg-clinical-white px-3 py-2 text-on-surface outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/30";
 
-type Tab = "overview" | "products" | "categories" | "types" | "brands" | "leads";
+type Tab = "overview" | "products" | "categories" | "types" | "brands" | "articles" | "leads";
 
 const tabs: { id: Tab; label: string; icon: (p: { className?: string }) => JSX.Element }[] = [
   { id: "overview", label: "Vue d'ensemble", icon: GridIcon },
@@ -48,30 +50,26 @@ const tabs: { id: Tab; label: string; icon: (p: { className?: string }) => JSX.E
   { id: "categories", label: "Catégories", icon: GridIcon },
   { id: "types", label: "Types", icon: TagIcon },
   { id: "brands", label: "Marques", icon: TagIcon },
+  { id: "articles", label: "Articles", icon: PencilIcon },
   { id: "leads", label: "Leads", icon: UsersIcon },
 ];
 
-function readFileAsDataURL(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const r = new FileReader();
-    r.onload = () => resolve(r.result as string);
-    r.onerror = reject;
-    r.readAsDataURL(file);
-  });
+/** Surface async store errors to the admin without crashing the panel. */
+function notifyError(e: unknown) {
+  alert(e instanceof Error ? e.message : "Une erreur est survenue.");
 }
 
 export function AdminDashboard() {
   const router = useRouter();
   const { authed, logout } = useAuth();
-  const [mounted, setMounted] = useState(false);
   const [tab, setTab] = useState<Tab>("overview");
 
-  useEffect(() => setMounted(true), []);
   useEffect(() => {
-    if (mounted && !authed) router.replace("/admin/login");
-  }, [mounted, authed, router]);
+    // `authed` is null while the Supabase session is being restored.
+    if (authed === false) router.replace("/admin/login");
+  }, [authed, router]);
 
-  if (!mounted || !authed) {
+  if (!authed) {
     return <div className="container-max py-24 text-center text-on-surface-variant">Chargement…</div>;
   }
 
@@ -103,8 +101,8 @@ export function AdminDashboard() {
           })}
         </nav>
         <button
-          onClick={() => {
-            logout();
+          onClick={async () => {
+            await logout();
             router.replace("/admin/login");
           }}
           className="mt-4 flex w-full items-center gap-3 rounded px-3 py-2.5 text-left text-error transition-colors hover:bg-error/10"
@@ -121,6 +119,7 @@ export function AdminDashboard() {
         {tab === "categories" && <CategoriesPanel />}
         {tab === "types" && <TypesPanel />}
         {tab === "brands" && <BrandsPanel />}
+        {tab === "articles" && <ArticlesPanel />}
         {tab === "leads" && <LeadsPanel />}
       </section>
     </div>
@@ -130,11 +129,11 @@ export function AdminDashboard() {
 /* ───────────────── Overview ───────────────── */
 function Overview({ onNav }: { onNav: (t: Tab) => void }) {
   const data = useAdminData();
-  const inStock = data.products.filter((p) => p.inStock).length;
   const cards = [
     { label: "Produits", value: data.products.length, tab: "products" as Tab, icon: BoxIcon },
     { label: "Catégories", value: data.sections.length, tab: "categories" as Tab, icon: GridIcon },
     { label: "Marques", value: data.brands.length, tab: "brands" as Tab, icon: TagIcon },
+    { label: "Articles", value: data.articles.length, tab: "articles" as Tab, icon: PencilIcon },
     { label: "Leads", value: data.leads.length, tab: "leads" as Tab, icon: UsersIcon },
   ];
   return (
@@ -155,12 +154,6 @@ function Overview({ onNav }: { onNav: (t: Tab) => void }) {
             </button>
           );
         })}
-      </div>
-      <div className="mt-6 rounded-lg border border-outline-variant bg-surface-gray p-5 text-sm text-on-surface-variant">
-        <strong className="text-on-surface">{inStock}</strong> produits en stock sur{" "}
-        <strong className="text-on-surface">{data.products.length}</strong>. Les modifications sont
-        enregistrées localement (phase front-end) — la synchronisation avec la base de données sera
-        ajoutée lors de la phase back-end.
       </div>
     </div>
   );
@@ -189,7 +182,6 @@ function ProductsPanel() {
               <th className="px-4 py-3">Produit</th>
               <th className="px-4 py-3">Marque</th>
               <th className="px-4 py-3">Section</th>
-              <th className="px-4 py-3">Stock</th>
               <th className="px-4 py-3 text-right">Actions</th>
             </tr>
           </thead>
@@ -201,25 +193,17 @@ function ProductsPanel() {
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
                       <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded bg-surface-container-low">
-                        <Image src={p.image} alt={p.name} fill className="object-contain p-1" />
+                        {p.image ? (
+                          <Image src={p.image} alt={p.name} fill className="object-contain p-1" />
+                        ) : (
+                          <span className="grid h-full w-full place-items-center text-[10px] text-on-surface-variant">—</span>
+                        )}
                       </div>
                       <span className="font-medium text-on-surface">{p.name}</span>
                     </div>
                   </td>
                   <td className="px-4 py-3 text-on-surface-variant">{brand?.name ?? p.brand}</td>
                   <td className="px-4 py-3 text-on-surface-variant capitalize">{p.section}</td>
-                  <td className="px-4 py-3">
-                    <button
-                      onClick={() => toggleStock(p.slug)}
-                      title="Basculer la disponibilité"
-                      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 font-mono text-label-caps uppercase ${
-                        p.inStock ? "bg-status-success/10 text-status-success" : "bg-error/10 text-error"
-                      }`}
-                    >
-                      {p.inStock ? <EyeIcon className="h-4 w-4" /> : <EyeOffIcon className="h-4 w-4" />}
-                      {p.inStock ? "En stock" : "Hors stock"}
-                    </button>
-                  </td>
                   <td className="px-4 py-3">
                     <div className="flex justify-end gap-2">
                       <IconBtn label="Modifier" onClick={() => setEditing(p)}>
@@ -229,7 +213,7 @@ function ProductsPanel() {
                         label="Supprimer"
                         danger
                         onClick={() => {
-                          if (confirm(`Supprimer "${p.name}" ?`)) deleteProduct(p.slug);
+                          if (confirm(`Supprimer "${p.name}" ?`)) deleteProduct(p.slug).catch(notifyError);
                         }}
                       >
                         <TrashIcon className="h-4 w-4" />
@@ -263,37 +247,86 @@ function ProductForm({ product, onClose }: { product: Product | null; onClose: (
     product ?? {
       slug: "",
       name: "",
-      brand: data.brands[0]?.slug ?? "",
+      brand: "",
       section: data.sections[0]?.slug ?? "consultation",
       subcategory: data.sections[0]?.subcategories[0]?.slug ?? "",
       image: "",
-      inStock: true,
       featured: false,
       taglineFr: "",
-      taglineEn: "",
       descriptionFr: "",
-      descriptionEn: "",
-      specs: [{ label: "", value: "" }],
     }
   );
+  const [uploading, setUploading] = useState<"image" | "gallery" | "brochure" | null>(null);
+  const [saving, setSaving] = useState(false);
 
   const section = data.sections.find((s) => s.slug === form.section);
 
   const set = <K extends keyof Product>(k: K, v: Product[K]) => setForm((f) => ({ ...f, [k]: v }));
 
   const handleImage = async (file?: File) => {
-    if (file) set("image", await readFileAsDataURL(file));
+    if (!file) return;
+    setUploading("image");
+    try {
+      const { url } = await uploadToImageKit(file, { folder: "products" });
+      set("image", url);
+    } catch (e) {
+      notifyError(e);
+    } finally {
+      setUploading(null);
+    }
   };
   const handleBrochure = async (file?: File) => {
-    if (file) set("brochure", await readFileAsDataURL(file));
+    if (!file) return;
+    setUploading("brochure");
+    try {
+      const { url } = await uploadToImageKit(file, { folder: "brochures" });
+      set("brochure", url);
+    } catch (e) {
+      notifyError(e);
+    } finally {
+      setUploading(null);
+    }
   };
 
-  const submit = (e: React.FormEvent) => {
+  const handleGallery = async (files?: FileList | null) => {
+    if (!files || files.length === 0) return;
+    setUploading("gallery");
+    try {
+      const urls: string[] = [];
+      for (const file of Array.from(files)) {
+        const { url } = await uploadToImageKit(file, { folder: "products" });
+        urls.push(url);
+      }
+      setForm((f) => ({ ...f, images: [...(f.images ?? []), ...urls] }));
+    } catch (e) {
+      notifyError(e);
+    } finally {
+      setUploading(null);
+    }
+  };
+  const moveImage = (idx: number, dir: -1 | 1) =>
+    setForm((f) => {
+      const arr = [...(f.images ?? [])];
+      const j = idx + dir;
+      if (j < 0 || j >= arr.length) return f;
+      [arr[idx], arr[j]] = [arr[j], arr[idx]];
+      return { ...f, images: arr };
+    });
+  const removeImage = (idx: number) =>
+    setForm((f) => ({ ...f, images: (f.images ?? []).filter((_, i) => i !== idx) }));
+
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     const slug = isEdit ? form.slug : slugify(form.name);
-    const cleanSpecs = form.specs.filter((s) => s.label.trim() || s.value.trim());
-    saveProduct({ ...form, slug, specs: cleanSpecs.length ? cleanSpecs : [{ label: "—", value: "—" }] }, product?.slug);
-    onClose();
+    setSaving(true);
+    try {
+      await saveProduct({ ...form, slug }, product?.slug);
+      onClose();
+    } catch (err) {
+      notifyError(err);
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -305,6 +338,7 @@ function ProductForm({ product, onClose }: { product: Product | null; onClose: (
           </Field>
           <Field label="Marque">
             <select className={inputCls} value={form.brand} onChange={(e) => set("brand", e.target.value)}>
+              <option value="">— Aucune marque —</option>
               {data.brands.map((b) => (
                 <option key={b.slug} value={b.slug}>{b.name}</option>
               ))}
@@ -328,125 +362,181 @@ function ProductForm({ product, onClose }: { product: Product | null; onClose: (
               ))}
             </select>
           </Field>
-          <Field label="Type (catégorie)">
-            <select className={inputCls} value={form.subcategory} onChange={(e) => set("subcategory", e.target.value)}>
-              {section?.subcategories.map((sc) => (
-                <option key={sc.slug} value={sc.slug}>{sc.name}</option>
-              ))}
-            </select>
-          </Field>
+          {section && section.subcategories.length > 0 && (
+            <Field label="Type (catégorie)">
+              <select className={inputCls} value={form.subcategory} onChange={(e) => set("subcategory", e.target.value)}>
+                {section.subcategories.map((sc) => (
+                  <option key={sc.slug} value={sc.slug}>{sc.name}</option>
+                ))}
+              </select>
+            </Field>
+          )}
         </div>
 
-        {/* Image */}
-        <Field label="Image du produit">
+        {/* Image — uploaded to ImageKit (signed), URL stored in Supabase */}
+        <Field label="Image principale (couverture)">
           <div className="flex items-center gap-4">
             <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded border border-outline-variant bg-surface-container-low">
               {form.image && <Image src={form.image} alt="" fill className="object-contain p-1" />}
             </div>
             <div className="flex flex-col gap-2">
-              <input type="file" accept="image/*" onChange={(e) => handleImage(e.target.files?.[0])} className="text-sm" />
               <input
-                className={inputCls}
-                placeholder="/catalog/exemple.jpeg"
-                list="catalog-images"
-                value={form.image.startsWith("data:") ? "" : form.image}
-                onChange={(e) => set("image", e.target.value)}
+                type="file"
+                accept="image/*"
+                disabled={uploading !== null}
+                onChange={(e) => handleImage(e.target.files?.[0])}
+                className="text-sm"
               />
-              <datalist id="catalog-images">
-                {Array.from(new Set(data.products.map((p) => p.image)))
-                  .filter((i) => !i.startsWith("data:"))
-                  .map((i) => (
-                    <option key={i} value={i} />
-                  ))}
-              </datalist>
+              {uploading === "image" ? (
+                <span className="text-sm text-on-surface-variant">Envoi de l&apos;image…</span>
+              ) : (
+                <input
+                  className={inputCls}
+                  placeholder="https://ik.imagekit.io/…"
+                  value={form.image}
+                  onChange={(e) => set("image", e.target.value)}
+                />
+              )}
             </div>
           </div>
         </Field>
 
-        {/* Brochure */}
-        <Field label="Brochure (PDF)">
+        {/* Gallery — extra images (one or many); the main image above is the cover */}
+        <Field label="Galerie (images supplémentaires)">
+          <div className="flex flex-col gap-3">
+            <div className="flex flex-wrap items-center gap-3">
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                disabled={uploading !== null}
+                onChange={(e) => handleGallery(e.target.files)}
+                className="text-sm"
+              />
+              {uploading === "gallery" && (
+                <span className="text-sm text-on-surface-variant">Envoi des images…</span>
+              )}
+            </div>
+            {(form.images?.length ?? 0) > 0 && (
+              <div className="flex flex-wrap gap-3">
+                {(form.images ?? []).map((url, idx) => (
+                  <div
+                    key={idx}
+                    className="group relative h-20 w-20 overflow-hidden rounded border border-outline-variant bg-surface-container-low"
+                  >
+                    <Image src={url} alt="" fill className="object-contain p-1" />
+                    <button
+                      type="button"
+                      onClick={() => removeImage(idx)}
+                      aria-label="Retirer l'image"
+                      className="absolute right-0.5 top-0.5 grid h-5 w-5 place-items-center rounded-full bg-on-surface/70 text-xs leading-none text-clinical-white opacity-0 transition group-hover:opacity-100"
+                    >
+                      ×
+                    </button>
+                    <div className="absolute inset-x-0 bottom-0 flex justify-between bg-on-surface/60 px-1 text-clinical-white opacity-0 transition group-hover:opacity-100">
+                      <button type="button" disabled={idx === 0} onClick={() => moveImage(idx, -1)} aria-label="Avancer">‹</button>
+                      <button type="button" disabled={idx === (form.images ?? []).length - 1} onClick={() => moveImage(idx, 1)} aria-label="Reculer">›</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            <p className="text-xs text-on-surface-variant">
+              L&apos;« Image principale » ci-dessus est la couverture ; ces images apparaissent ensuite dans le carrousel du produit. Vous pouvez en ajouter une ou plusieurs.
+            </p>
+          </div>
+        </Field>
+
+        {/* Brochure (PDF) — uploaded to ImageKit, URL stored in Supabase */}
+        <Field label="Brochure">
           <div className="flex flex-wrap items-center gap-3">
-            <input type="file" accept="application/pdf" onChange={(e) => handleBrochure(e.target.files?.[0])} className="text-sm" />
-            {form.brochure ? (
-              <span className="inline-flex items-center gap-1 text-sm text-status-success">
+            <input
+              type="file"
+              accept="application/pdf"
+              disabled={uploading !== null}
+              onChange={(e) => handleBrochure(e.target.files?.[0])}
+              className="text-sm"
+            />
+            {uploading === "brochure" ? (
+              <span className="text-sm text-on-surface-variant">Envoi de la brochure…</span>
+            ) : form.brochure ? (
+              <span className="inline-flex items-center gap-2 text-sm text-status-success">
                 <CheckIcon className="h-4 w-4" /> Brochure attachée
+                <button
+                  type="button"
+                  onClick={() => set("brochure", undefined)}
+                  className="text-error underline"
+                >
+                  retirer
+                </button>
               </span>
             ) : (
-              <span className="text-sm text-on-surface-variant">Aucune brochure (la brochure par défaut sera utilisée)</span>
+              <span className="text-sm text-on-surface-variant">Aucune brochure</span>
             )}
           </div>
         </Field>
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Field label="Accroche (FR)">
-            <input className={inputCls} value={form.taglineFr} onChange={(e) => set("taglineFr", e.target.value)} />
-          </Field>
-          <Field label="Tagline (EN)">
-            <input className={inputCls} value={form.taglineEn} onChange={(e) => set("taglineEn", e.target.value)} />
-          </Field>
-        </div>
-        <Field label="Description (FR)">
-          <textarea className={inputCls} rows={3} value={form.descriptionFr} onChange={(e) => set("descriptionFr", e.target.value)} />
+        <Field label="Accroche (affichée dans le carrousel d'accueil)">
+          <input className={inputCls} value={form.taglineFr} onChange={(e) => set("taglineFr", e.target.value)} />
         </Field>
-        <Field label="Description (EN)">
-          <textarea className={inputCls} rows={3} value={form.descriptionEn} onChange={(e) => set("descriptionEn", e.target.value)} />
-        </Field>
-
-        {/* Specs */}
-        <Field label="Spécifications">
-          <div className="flex flex-col gap-2">
-            {form.specs.map((spec, i) => (
-              <div key={i} className="flex gap-2">
-                <input
-                  className={inputCls}
-                  placeholder="Libellé"
-                  value={spec.label}
-                  onChange={(e) => {
-                    const specs = [...form.specs];
-                    specs[i] = { ...specs[i], label: e.target.value };
-                    set("specs", specs);
-                  }}
-                />
-                <input
-                  className={inputCls}
-                  placeholder="Valeur"
-                  value={spec.value}
-                  onChange={(e) => {
-                    const specs = [...form.specs];
-                    specs[i] = { ...specs[i], value: e.target.value };
-                    set("specs", specs);
-                  }}
-                />
-                <IconBtn label="Retirer" danger onClick={() => set("specs", form.specs.filter((_, j) => j !== i))}>
-                  <CloseIcon className="h-4 w-4" />
-                </IconBtn>
-              </div>
-            ))}
-            <button
-              type="button"
-              onClick={() => set("specs", [...form.specs, { label: "", value: "" }])}
-              className="inline-flex w-fit items-center gap-1 text-sm font-medium text-primary-container hover:text-primary"
-            >
-              <PlusIcon className="h-4 w-4" /> Ajouter une spécification
-            </button>
-          </div>
+        <Field label="Description (les retours à la ligne sont conservés)">
+          <textarea className={inputCls} rows={8} value={form.descriptionFr} onChange={(e) => set("descriptionFr", e.target.value)} />
         </Field>
 
         <div className="flex flex-wrap gap-6">
-          <Toggle label="En stock" checked={form.inStock} onChange={(v) => set("inStock", v)} />
           <Toggle label="Produit en vedette (accueil)" checked={!!form.featured} onChange={(v) => set("featured", v)} />
         </div>
 
+        {/* Hero photo — only relevant when the product is featured on the home hero */}
+        {form.featured && (
+          <Field label="Photo affichée dans le carrousel d'accueil">
+            {[form.image, ...(form.images ?? [])].filter(Boolean).length === 0 ? (
+              <p className="text-sm text-on-surface-variant">Ajoutez d&apos;abord une image au produit.</p>
+            ) : (
+              <>
+                <div className="flex flex-wrap gap-3">
+                  {[form.image, ...(form.images ?? [])].filter(Boolean).map((url, idx) => {
+                    const selected = (form.heroImage ?? form.image) === url;
+                    return (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => set("heroImage", url)}
+                        aria-label={`Choisir la photo ${idx + 1} pour le hero`}
+                        aria-current={selected}
+                        className={`relative h-20 w-20 overflow-hidden rounded border bg-clinical-white transition ${
+                          selected ? "border-primary ring-2 ring-primary" : "border-outline-variant hover:border-primary/50"
+                        }`}
+                      >
+                        <Image src={url} alt="" fill className="object-contain p-1" />
+                        {idx === 0 && (
+                          <span className="absolute left-0 top-0 bg-on-surface/70 px-1 text-[10px] leading-tight text-clinical-white">
+                            couverture
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="text-xs text-on-surface-variant">
+                  Par défaut, la couverture est utilisée. Cliquez une photo pour l&apos;afficher dans le carrousel d&apos;accueil.
+                </p>
+              </>
+            )}
+          </Field>
+        )}
+
         <div className="mt-2 flex justify-end gap-3 border-t border-outline-variant pt-4">
           <button type="button" onClick={onClose} className="btn-outline">Annuler</button>
-          <button type="submit" className="btn-solid">{isEdit ? "Enregistrer" : "Créer le produit"}</button>
+          <button type="submit" disabled={saving || uploading !== null} className="btn-solid disabled:opacity-60">
+            {saving ? "Enregistrement…" : isEdit ? "Enregistrer" : "Créer le produit"}
+          </button>
         </div>
       </form>
     </Modal>
   );
 }
 
-/* ───────────────── Categories ───────────────── */
 function CategoriesPanel() {
   const data = useAdminData();
   const [editing, setEditing] = useState<Section | null>(null);
@@ -470,9 +560,11 @@ function CategoriesPanel() {
             <p className="mb-3 text-sm text-on-surface-variant">{s.subcategories.length} types · {data.products.filter((p) => p.section === s.slug).length} produits</p>
             <div className="flex gap-2">
               <IconBtn label="Modifier" onClick={() => setEditing(s)}><PencilIcon className="h-4 w-4" /></IconBtn>
-              <IconBtn label="Supprimer" danger onClick={() => { if (confirm(`Supprimer la catégorie "${s.name}" ?`)) deleteCategory(s.slug); }}>
-                <TrashIcon className="h-4 w-4" />
-              </IconBtn>
+              {!STANDALONE_SECTIONS.includes(s.slug) && (
+                <IconBtn label="Supprimer" danger onClick={() => { if (confirm(`Supprimer la catégorie "${s.name}" ?`)) deleteCategory(s.slug).catch(notifyError); }}>
+                  <TrashIcon className="h-4 w-4" />
+                </IconBtn>
+              )}
             </div>
           </div>
         ))}
@@ -493,44 +585,57 @@ function CategoryForm({ section, onClose }: { section: Section | null; onClose: 
       label: "",
       name: "",
       description: "",
-      cover: "/brand/consultation.png",
       subcategories: [] as Section["subcategories"],
     }
   );
-  const submit = (e: React.FormEvent) => {
+  const [saving, setSaving] = useState(false);
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     const slug = isEdit ? form.slug : (slugify(form.name) as Section["slug"]);
-    saveCategory({ ...form, slug }, section?.slug);
-    onClose();
+    setSaving(true);
+    try {
+      await saveCategory({ ...form, slug }, section?.slug);
+      onClose();
+    } catch (err) {
+      notifyError(err);
+    } finally {
+      setSaving(false);
+    }
   };
   return (
     <Modal title={isEdit ? `Modifier ${section?.name}` : "Nouvelle catégorie"} onClose={onClose}>
       <form onSubmit={submit} className="flex flex-col gap-4">
         <Field label="Nom"><input className={inputCls} required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></Field>
-        <Field label="Libellé (ex: Section A)"><input className={inputCls} value={form.label} onChange={(e) => setForm({ ...form, label: e.target.value })} /></Field>
         <Field label="Description"><textarea className={inputCls} rows={3} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></Field>
-        <Field label="Image de couverture (chemin)"><input className={inputCls} value={form.cover} onChange={(e) => setForm({ ...form, cover: e.target.value })} /></Field>
         <div className="flex justify-end gap-3 border-t border-outline-variant pt-4">
           <button type="button" onClick={onClose} className="btn-outline">Annuler</button>
-          <button type="submit" className="btn-solid">{isEdit ? "Enregistrer" : "Créer"}</button>
+          <button type="submit" disabled={saving} className="btn-solid disabled:opacity-60">
+            {saving ? "Enregistrement…" : isEdit ? "Enregistrer" : "Créer"}
+          </button>
         </div>
       </form>
     </Modal>
   );
 }
 
-/* ───────────────── Types (subcategories) ───────────────── */
 function TypesPanel() {
   const data = useAdminData();
-  const [sectionSlug, setSectionSlug] = useState<string>(data.sections[0]?.slug ?? "");
+  // Types only exist under the Ophtalmologie sections (Optique/Occasion are flat).
+  const manageable = data.sections.filter((s) => !STANDALONE_SECTIONS.includes(s.slug));
+  const [sectionSlug, setSectionSlug] = useState<string>("");
   const [name, setName] = useState("");
-  const section = data.sections.find((s) => s.slug === sectionSlug);
+  const effectiveSlug = sectionSlug || manageable[0]?.slug || "";
+  const section = manageable.find((s) => s.slug === effectiveSlug);
 
-  const add = (e: React.FormEvent) => {
+  const add = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim() || !section) return;
-    addType(section.slug, { slug: slugify(name), name: name.trim() });
-    setName("");
+    try {
+      await addType(section.slug, { slug: slugify(name), name: name.trim() });
+      setName("");
+    } catch (err) {
+      notifyError(err);
+    }
   };
 
   return (
@@ -538,8 +643,8 @@ function TypesPanel() {
       <PanelHeader title="Types (sous-catégories)" />
       <div className="mb-5 max-w-sm">
         <Field label="Catégorie">
-          <select className={inputCls} value={sectionSlug} onChange={(e) => setSectionSlug(e.target.value)}>
-            {data.sections.map((s) => (
+          <select className={inputCls} value={effectiveSlug} onChange={(e) => setSectionSlug(e.target.value)}>
+            {manageable.map((s) => (
               <option key={s.slug} value={s.slug}>{s.name}</option>
             ))}
           </select>
@@ -561,7 +666,7 @@ function TypesPanel() {
                   {data.products.filter((p) => p.subcategory === sc.slug).length} produit(s)
                 </span>
               </div>
-              <IconBtn label="Supprimer" danger onClick={() => deleteType(section.slug, sc.slug)}>
+              <IconBtn label="Supprimer" danger onClick={() => deleteType(section.slug, sc.slug).catch(notifyError)}>
                 <TrashIcon className="h-4 w-4" />
               </IconBtn>
             </li>
@@ -575,7 +680,6 @@ function TypesPanel() {
   );
 }
 
-/* ───────────────── Brands ───────────────── */
 function BrandsPanel() {
   const data = useAdminData();
   const [editing, setEditing] = useState<Brand | null>(null);
@@ -602,9 +706,14 @@ function BrandsPanel() {
               )}
             </div>
             <span className="text-sm font-medium text-on-surface">{b.name}</span>
+            {b.isPartner === false && (
+              <span className="rounded-full bg-outline-variant/40 px-2 py-0.5 font-mono text-label-caps uppercase text-on-surface-variant">
+                Non partenaire
+              </span>
+            )}
             <div className="flex gap-2">
               <IconBtn label="Modifier" onClick={() => setEditing(b)}><PencilIcon className="h-4 w-4" /></IconBtn>
-              <IconBtn label="Supprimer" danger onClick={() => { if (confirm(`Supprimer "${b.name}" ?`)) deleteBrand(b.slug); }}>
+              <IconBtn label="Supprimer" danger onClick={() => { if (confirm(`Supprimer "${b.name}" ?`)) deleteBrand(b.slug).catch(notifyError); }}>
                 <TrashIcon className="h-4 w-4" />
               </IconBtn>
             </div>
@@ -619,18 +728,34 @@ function BrandsPanel() {
 
 function BrandForm({ brand, onClose }: { brand: Brand | null; onClose: () => void }) {
   const isEdit = !!brand;
-  const [form, setForm] = useState<Brand>(brand ?? { slug: "", name: "", logo: "" });
+  const [form, setForm] = useState<Brand>(brand ?? { slug: "", name: "", logo: "", isPartner: true });
+  const [uploading, setUploading] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   const handleLogo = async (file?: File) => {
     if (!file) return;
-    const dataUrl = await readFileAsDataURL(file);
-    setForm((f) => ({ ...f, logo: dataUrl }));
+    setUploading(true);
+    try {
+      const { url } = await uploadToImageKit(file, { folder: "brands" });
+      setForm((f) => ({ ...f, logo: url }));
+    } catch (e) {
+      notifyError(e);
+    } finally {
+      setUploading(false);
+    }
   };
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     const slug = isEdit ? form.slug : slugify(form.name);
-    saveBrand({ ...form, slug }, brand?.slug);
-    onClose();
+    setSaving(true);
+    try {
+      await saveBrand({ ...form, slug }, brand?.slug);
+      onClose();
+    } catch (err) {
+      notifyError(err);
+    } finally {
+      setSaving(false);
+    }
   };
   return (
     <Modal title={isEdit ? `Modifier ${brand?.name}` : "Nouvelle marque"} onClose={onClose}>
@@ -642,14 +767,275 @@ function BrandForm({ brand, onClose }: { brand: Brand | null; onClose: () => voi
               {form.logo && <Image src={form.logo} alt="" fill className="object-contain p-1" />}
             </div>
             <div className="flex flex-col gap-2">
-              <input type="file" accept="image/*" onChange={(e) => handleLogo(e.target.files?.[0])} className="text-sm" />
-              <input className={inputCls} placeholder="/sponsors/exemple.png" value={form.logo?.startsWith("data:") ? "" : form.logo ?? ""} onChange={(e) => setForm({ ...form, logo: e.target.value })} />
+              <input type="file" accept="image/*" disabled={uploading} onChange={(e) => handleLogo(e.target.files?.[0])} className="text-sm" />
+              {uploading ? (
+                <span className="text-sm text-on-surface-variant">Envoi du logo…</span>
+              ) : (
+                <input className={inputCls} placeholder="https://ik.imagekit.io/…" value={form.logo ?? ""} onChange={(e) => setForm({ ...form, logo: e.target.value })} />
+              )}
             </div>
           </div>
         </Field>
+        <Toggle
+          label="Marque partenaire (visible sur l'accueil et dans la recherche)"
+          checked={form.isPartner !== false}
+          onChange={(v) => setForm({ ...form, isPartner: v })}
+        />
         <div className="flex justify-end gap-3 border-t border-outline-variant pt-4">
           <button type="button" onClick={onClose} className="btn-outline">Annuler</button>
-          <button type="submit" className="btn-solid">{isEdit ? "Enregistrer" : "Créer"}</button>
+          <button type="submit" disabled={saving || uploading} className="btn-solid disabled:opacity-60">
+            {saving ? "Enregistrement…" : isEdit ? "Enregistrer" : "Créer"}
+          </button>
+        </div>
+      </form>
+    </Modal>
+  );
+}
+
+/* ───────────────── Articles (blog) ───────────────── */
+function ArticlesPanel() {
+  const data = useAdminData();
+  const [editing, setEditing] = useState<Article | null>(null);
+  const [creating, setCreating] = useState(false);
+  const fmt = (iso: string) => new Date(iso).toLocaleDateString("fr-FR", { dateStyle: "medium" });
+
+  return (
+    <div>
+      <PanelHeader
+        title="Articles"
+        action={
+          <button onClick={() => setCreating(true)} className="btn-solid">
+            <PlusIcon className="h-5 w-5" /> Ajouter un article
+          </button>
+        }
+      />
+      <div className="overflow-x-auto rounded-lg border border-outline-variant">
+        <table className="w-full min-w-[680px] text-left text-sm">
+          <thead className="bg-surface-gray font-mono text-label-caps uppercase text-on-surface-variant">
+            <tr>
+              <th className="px-4 py-3">Article</th>
+              <th className="px-4 py-3">Catégorie</th>
+              <th className="px-4 py-3">Date</th>
+              <th className="px-4 py-3">Statut</th>
+              <th className="px-4 py-3 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-outline-variant">
+            {data.articles.map((a) => (
+              <tr key={a.slug} className="bg-clinical-white">
+                <td className="px-4 py-3">
+                  <div className="flex items-center gap-3">
+                    <div className="relative h-10 w-14 shrink-0 overflow-hidden rounded bg-surface-container-low">
+                      {a.cover ? (
+                        <Image src={a.cover} alt={a.title} fill className="object-cover" />
+                      ) : (
+                        <span className="grid h-full w-full place-items-center text-[10px] text-on-surface-variant">—</span>
+                      )}
+                    </div>
+                    <span className="font-medium text-on-surface">{a.title}</span>
+                  </div>
+                </td>
+                <td className="px-4 py-3 text-on-surface-variant">{a.category}</td>
+                <td className="px-4 py-3 text-on-surface-variant">{fmt(a.date)}</td>
+                <td className="px-4 py-3">
+                  <span
+                    className={`rounded-full px-2.5 py-0.5 font-mono text-label-caps uppercase ${
+                      a.published !== false
+                        ? "bg-status-success/10 text-status-success"
+                        : "bg-outline-variant/40 text-on-surface-variant"
+                    }`}
+                  >
+                    {a.published !== false ? "Publié" : "Brouillon"}
+                  </span>
+                </td>
+                <td className="px-4 py-3">
+                  <div className="flex justify-end gap-2">
+                    <IconBtn label="Modifier" onClick={() => setEditing(a)}>
+                      <PencilIcon className="h-4 w-4" />
+                    </IconBtn>
+                    <IconBtn
+                      label="Supprimer"
+                      danger
+                      onClick={() => {
+                        if (confirm(`Supprimer "${a.title}" ?`)) deleteArticle(a.slug).catch(notifyError);
+                      }}
+                    >
+                      <TrashIcon className="h-4 w-4" />
+                    </IconBtn>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        {data.ready && data.articles.length === 0 && (
+          <p className="bg-clinical-white px-4 py-6 text-center text-sm text-on-surface-variant">
+            Aucun article — ajoutez le premier, ou exécutez seed-blog.sql pour importer les articles de démonstration.
+          </p>
+        )}
+      </div>
+
+      {(creating || editing) && (
+        <ArticleForm
+          article={editing}
+          onClose={() => {
+            setCreating(false);
+            setEditing(null);
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+function ArticleForm({ article, onClose }: { article: Article | null; onClose: () => void }) {
+  const isEdit = !!article;
+  const [form, setForm] = useState<Article>(
+    article ?? {
+      slug: "",
+      title: "",
+      excerpt: "",
+      category: "Actualités",
+      date: new Date().toISOString(),
+      cover: "",
+      body: "",
+      published: true,
+    }
+  );
+  const [uploading, setUploading] = useState<"cover" | "pdf" | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  const set = <K extends keyof Article>(k: K, v: Article[K]) => setForm((f) => ({ ...f, [k]: v }));
+
+  const handleCover = async (file?: File) => {
+    if (!file) return;
+    setUploading("cover");
+    try {
+      const { url } = await uploadToImageKit(file, { folder: "articles" });
+      set("cover", url);
+    } catch (e) {
+      notifyError(e);
+    } finally {
+      setUploading(null);
+    }
+  };
+
+  const handlePdf = async (file?: File) => {
+    if (!file) return;
+    setUploading("pdf");
+    try {
+      const { url } = await uploadToImageKit(file, { folder: "articles" });
+      set("pdf", url);
+    } catch (e) {
+      notifyError(e);
+    } finally {
+      setUploading(null);
+    }
+  };
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const slug = isEdit ? form.slug : slugify(form.title);
+    setSaving(true);
+    try {
+      await saveArticle({ ...form, slug }, article?.slug);
+      onClose();
+    } catch (err) {
+      notifyError(err);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Modal title={isEdit ? `Modifier ${article?.title}` : "Nouvel article"} onClose={onClose} wide>
+      <form onSubmit={submit} className="flex flex-col gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <Field label="Titre">
+            <input className={inputCls} required value={form.title} onChange={(e) => set("title", e.target.value)} />
+          </Field>
+          <Field label="Catégorie">
+            <input
+              className={inputCls}
+              placeholder="Technologie, Conseils Cliniques…"
+              value={form.category}
+              onChange={(e) => set("category", e.target.value)}
+            />
+          </Field>
+        </div>
+
+        {/* Cover — uploaded to ImageKit (signed), URL stored in Supabase */}
+        <Field label="Image de couverture">
+          <div className="flex items-center gap-4">
+            <div className="relative h-20 w-32 shrink-0 overflow-hidden rounded border border-outline-variant bg-surface-container-low">
+              {form.cover && <Image src={form.cover} alt="" fill className="object-cover" />}
+            </div>
+            <div className="flex flex-col gap-2">
+              <input
+                type="file"
+                accept="image/*"
+                disabled={uploading !== null}
+                onChange={(e) => handleCover(e.target.files?.[0])}
+                className="text-sm"
+              />
+              {uploading === "cover" ? (
+                <span className="text-sm text-on-surface-variant">Envoi de l&apos;image…</span>
+              ) : (
+                <input
+                  className={inputCls}
+                  placeholder="https://ik.imagekit.io/…"
+                  value={form.cover}
+                  onChange={(e) => set("cover", e.target.value)}
+                />
+              )}
+            </div>
+          </div>
+        </Field>
+
+        {/* PDF — l'article peut être un document à consulter/télécharger */}
+        <Field label="Document PDF (optionnel — affiché avec un bouton de téléchargement)">
+          <div className="flex flex-wrap items-center gap-3">
+            <input
+              type="file"
+              accept="application/pdf"
+              disabled={uploading !== null}
+              onChange={(e) => handlePdf(e.target.files?.[0])}
+              className="text-sm"
+            />
+            {uploading === "pdf" ? (
+              <span className="text-sm text-on-surface-variant">Envoi du PDF…</span>
+            ) : form.pdf ? (
+              <span className="inline-flex items-center gap-2 text-sm text-status-success">
+                <CheckIcon className="h-4 w-4" /> PDF attaché
+                <button type="button" onClick={() => set("pdf", undefined)} className="text-error underline">
+                  retirer
+                </button>
+              </span>
+            ) : (
+              <span className="text-sm text-on-surface-variant">Aucun PDF (max 10 Mo)</span>
+            )}
+          </div>
+        </Field>
+
+        <Field label={form.pdf ? "Contenu (optionnel avec un PDF — le 1er paragraphe sert d'extrait)" : "Contenu (les lignes vides séparent les paragraphes — le 1er sert d'extrait)"}>
+          <textarea
+            className={inputCls}
+            rows={10}
+            required={!form.pdf}
+            value={form.body ?? ""}
+            onChange={(e) => set("body", e.target.value)}
+          />
+        </Field>
+
+        <div className="flex flex-wrap gap-6">
+          <Toggle label="Publié (visible sur le blog)" checked={form.published !== false} onChange={(v) => set("published", v)} />
+        </div>
+
+        <div className="mt-2 flex justify-end gap-3 border-t border-outline-variant pt-4">
+          <button type="button" onClick={onClose} className="btn-outline">Annuler</button>
+          <button type="submit" disabled={saving || uploading !== null} className="btn-solid disabled:opacity-60">
+            {saving ? "Enregistrement…" : isEdit ? "Enregistrer" : "Créer l'article"}
+          </button>
         </div>
       </form>
     </Modal>
@@ -711,7 +1097,7 @@ function LeadsPanel() {
                   <td className="px-4 py-3 text-on-surface-variant">{l.productName}</td>
                   <td className="px-4 py-3 text-on-surface-variant">{fmt(l.date)}</td>
                   <td className="px-4 py-3 text-right">
-                    <IconBtn label="Supprimer" danger onClick={() => deleteLead(l.id)}>
+                    <IconBtn label="Supprimer" danger onClick={() => deleteLead(l.id).catch(notifyError)}>
                       <TrashIcon className="h-4 w-4" />
                     </IconBtn>
                   </td>

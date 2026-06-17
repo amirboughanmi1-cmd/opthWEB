@@ -1,53 +1,42 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
+/**
+ * Admin auth via Supabase Auth (replaces the localStorage demo login).
+ * Sessions, password hashing and refresh tokens are handled by supabase-js;
+ * RLS write policies check the user against the `profiles` table server-side.
+ */
+import { useEffect, useState } from "react";
+import { getSupabaseBrowser } from "@/lib/supabase/client";
+
+/** Sign in with email + password. Returns an error message, or null on success. */
+export async function login(email: string, password: string): Promise<string | null> {
+  const { error } = await getSupabaseBrowser().auth.signInWithPassword({
+    email: email.trim(),
+    password,
+  });
+  return error ? error.message : null;
+}
+
+export async function logout() {
+  await getSupabaseBrowser().auth.signOut();
+}
 
 /**
- * Front-end-only admin auth (demo). Replace with real backend auth (e.g. Supabase) later.
- * Credentials are intentionally simple for the prototype phase.
+ * Reactive auth state.
+ * `authed` is `null` while the session is being restored — guards must only
+ * redirect on an explicit `false`, never on `null`.
  */
-const SESSION_KEY = "oh-admin-session";
-
-// Demo credentials — change before any real deployment, and move to the backend.
-const ADMIN_USER = "admin";
-const ADMIN_PASS = "ophtahealth2024";
-
-const listeners = new Set<() => void>();
-
-function emit() {
-  listeners.forEach((l) => l());
-}
-
-function subscribe(cb: () => void) {
-  listeners.add(cb);
-  window.addEventListener("storage", cb);
-  return () => {
-    listeners.delete(cb);
-    window.removeEventListener("storage", cb);
-  };
-}
-
-function getSnapshot(): boolean {
-  if (typeof window === "undefined") return false;
-  return localStorage.getItem(SESSION_KEY) === "1";
-}
-
-export function login(username: string, password: string): boolean {
-  if (username.trim() === ADMIN_USER && password === ADMIN_PASS) {
-    localStorage.setItem(SESSION_KEY, "1");
-    emit();
-    return true;
-  }
-  return false;
-}
-
-export function logout() {
-  localStorage.removeItem(SESSION_KEY);
-  emit();
-}
-
-/** Reactive auth state. */
 export function useAuth() {
-  const authed = useSyncExternalStore(subscribe, getSnapshot, () => false);
+  const [authed, setAuthed] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    const sb = getSupabaseBrowser();
+    sb.auth.getSession().then(({ data }) => setAuthed(!!data.session));
+    const { data: sub } = sb.auth.onAuthStateChange((_event, session) => {
+      setAuthed(!!session);
+    });
+    return () => sub.subscription.unsubscribe();
+  }, []);
+
   return { authed, login, logout };
 }

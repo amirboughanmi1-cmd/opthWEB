@@ -1,101 +1,71 @@
-"use client";
-
+import type { Metadata } from "next";
 import Link from "next/link";
 import { PageHeader } from "@/components/PageHeader";
 import { Accordion, type QA } from "@/components/Accordion";
-import { useLang, pick } from "@/i18n/LanguageProvider";
+
+export const metadata: Metadata = {
+  title: "FAQ",
+  description:
+    "Foire aux questions OphtaHealth : calibration, support technique, livraison et maintenance des équipements ophtalmiques.",
+};
+
+const calibration: QA[] = [
+  {
+    q: "À quelle fréquence le système OCT doit-il être calibré ?",
+    a: "Nous recommandons une calibration annuelle par un technicien agréé, ou selon les préconisations du fabricant indiquées dans la documentation de l'appareil.",
+  },
+  {
+    q: "Quelle est la tolérance acceptable pour l'alignement laser ?",
+    a: "La tolérance dépend du modèle. Nos ingénieurs vérifient l'alignement lors de chaque intervention de maintenance préventive.",
+  },
+];
+
+const support: QA[] = [
+  {
+    q: "Comment exporter les fichiers DICOM pour une analyse externe ?",
+    a: "La plupart de nos appareils permettent l'export DICOM via le menu d'exportation. Notre équipe peut vous accompagner dans la configuration.",
+  },
+  {
+    q: "Fournissez-vous un support technique à distance ?",
+    a: "Oui. Nos ingénieurs cliniques proposent un support à distance ainsi qu'une assistance sur site pour les interventions plus complexes.",
+  },
+];
+
+const logistics: QA[] = [
+  {
+    q: "Quels sont vos délais de livraison et d'installation ?",
+    a: "Les délais varient selon la disponibilité du produit. Tous nos équipements sont proposés sur commande.",
+  },
+  {
+    q: "Proposez-vous des contrats de maintenance ?",
+    a: "Oui, nous proposons des contrats de service incluant maintenance préventive, pièces de rechange et interventions prioritaires.",
+  },
+];
 
 export default function FAQPage() {
-  const { lang } = useLang();
-
-  const calibration: QA[] = [
-    {
-      q: pick(lang, "À quelle fréquence le système OCT doit-il être calibré ?", "How often should the OCT system be calibrated?"),
-      a: pick(
-        lang,
-        "Nous recommandons une calibration annuelle par un technicien agréé, ou selon les préconisations du fabricant indiquées dans la documentation de l'appareil.",
-        "We recommend annual calibration by an authorized technician, or as specified by the manufacturer in the device documentation."
-      ),
-    },
-    {
-      q: pick(lang, "Quelle est la tolérance acceptable pour l'alignement laser ?", "What is the acceptable tolerance for laser alignment?"),
-      a: pick(
-        lang,
-        "La tolérance dépend du modèle. Nos ingénieurs vérifient l'alignement lors de chaque intervention de maintenance préventive.",
-        "Tolerance depends on the model. Our engineers verify alignment during every preventive maintenance visit."
-      ),
-    },
-  ];
-
-  const support: QA[] = [
-    {
-      q: pick(lang, "Comment exporter les fichiers DICOM pour une analyse externe ?", "How do I export DICOM files for external analysis?"),
-      a: pick(
-        lang,
-        "La plupart de nos appareils permettent l'export DICOM via le menu d'exportation. Notre équipe peut vous accompagner dans la configuration.",
-        "Most of our devices support DICOM export through the export menu. Our team can assist you with the configuration."
-      ),
-    },
-    {
-      q: pick(lang, "Fournissez-vous un support technique à distance ?", "Do you provide remote technical support?"),
-      a: pick(
-        lang,
-        "Oui. Nos ingénieurs cliniques proposent un support à distance ainsi qu'une assistance sur site pour les interventions plus complexes.",
-        "Yes. Our clinical engineers offer remote support as well as on-site assistance for more complex interventions."
-      ),
-    },
-  ];
-
-  const logistics: QA[] = [
-    {
-      q: pick(lang, "Quels sont vos délais de livraison et d'installation ?", "What are your delivery and installation times?"),
-      a: pick(
-        lang,
-        "Les délais varient selon la disponibilité du produit. Le statut En stock / Hors stock est indiqué sur chaque fiche produit.",
-        "Times vary depending on product availability. The In stock / Out of stock status is shown on each product page."
-      ),
-    },
-    {
-      q: pick(lang, "Proposez-vous des contrats de maintenance ?", "Do you offer maintenance contracts?"),
-      a: pick(
-        lang,
-        "Oui, nous proposons des contrats de service incluant maintenance préventive, pièces de rechange et interventions prioritaires.",
-        "Yes, we offer service contracts including preventive maintenance, spare parts and priority interventions."
-      ),
-    },
-  ];
-
   return (
     <>
       <PageHeader
-        eyebrow={pick(lang, "Support & documentation", "Support & documentation")}
-        title={pick(lang, "Foire aux Questions", "Frequently Asked Questions")}
-        subtitle={pick(
-          lang,
-          "Documentation technique et réponses aux questions fréquentes sur nos systèmes de diagnostic et d'imagerie.",
-          "Technical documentation and answers to common questions about our diagnostic and imaging systems."
-        )}
+        eyebrow="Support & documentation"
+        title="Foire aux Questions"
+        subtitle="Documentation technique et réponses aux questions fréquentes sur nos systèmes de diagnostic et d'imagerie."
       />
 
       <div className="container-max flex flex-col gap-12 py-12">
-        <Group title={pick(lang, "Calibration des équipements", "Equipment calibration")} items={calibration} />
-        <Group title={pick(lang, "Support technique", "Technical support")} items={support} />
-        <Group title={pick(lang, "Livraison & maintenance", "Delivery & maintenance")} items={logistics} />
+        <Group title="Calibration des équipements" items={calibration} />
+        <Group title="Support technique" items={support} />
+        <Group title="Livraison & maintenance" items={logistics} />
       </div>
 
       <section className="border-t border-outline-variant bg-surface-gray px-margin-edge py-16 text-center">
         <h2 className="mb-3 font-display text-headline-lg text-primary-container">
-          {pick(lang, "Vous ne trouvez pas votre réponse ?", "Can't find your answer?")}
+          Vous ne trouvez pas votre réponse ?
         </h2>
         <p className="mx-auto mb-8 max-w-xl text-on-surface-variant">
-          {pick(
-            lang,
-            "Nos ingénieurs de support clinique sont disponibles pour vous assister.",
-            "Our clinical support engineers are available to assist you."
-          )}
+          Nos ingénieurs de support clinique sont disponibles pour vous assister.
         </p>
         <Link href="/support" className="btn-solid">
-          {pick(lang, "Contacter le support", "Contact support")}
+          Contacter le support
         </Link>
       </section>
     </>

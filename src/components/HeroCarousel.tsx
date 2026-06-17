@@ -2,15 +2,21 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { type Product, productTagline } from "@/data/products";
+import { ProductImage } from "./ProductImage";
 import { ArrowRight } from "./Icons";
-import { useLang } from "@/i18n/LanguageProvider";
 import { t } from "@/i18n/ui";
 
 export function HeroCarousel({ products }: { products: Product[] }) {
-  const { lang } = useLang();
   const [index, setIndex] = useState(0);
+  // Hidden slides are opacity-0 but in-viewport, so their images would all
+  // download at page load and compete with the LCP image. Only the slides
+  // already shown get a real <img>.
+  const [visited, setVisited] = useState<Set<number>>(() => new Set([0]));
+
+  useEffect(() => {
+    setVisited((v) => (v.has(index) ? v : new Set(v).add(index)));
+  }, [index]);
 
   useEffect(() => {
     if (products.length <= 1) return;
@@ -20,39 +26,45 @@ export function HeroCarousel({ products }: { products: Product[] }) {
 
   return (
     <header className="relative w-full overflow-hidden border-b border-outline-variant bg-clinical-white">
-      <div className="relative min-h-[70vh]">
+      {/* Grid stack: all slides share one cell, so the hero grows to fit its content
+          (no clipping/overlap on mobile) while the fade transition still works. */}
+      <div className="grid">
         {products.map((p, i) => (
           <div
             key={p.slug}
             aria-hidden={i !== index}
-            className={`absolute inset-0 transition-opacity duration-700 ${
+            className={`col-start-1 row-start-1 transition-opacity duration-700 ${
               i === index ? "opacity-100" : "pointer-events-none opacity-0"
             }`}
           >
-            <div className="container-max flex h-full flex-col items-center gap-8 py-12 md:flex-row">
-              {/* Image — always LEFT */}
+            <div className="container-max flex flex-col items-center gap-6 pt-10 pb-20 md:min-h-[70vh] md:flex-row md:gap-8 md:py-12">
+              {/* Image — always LEFT (fixed-height box reserves space → no layout shift) */}
               <div className="flex w-full items-center justify-center md:w-1/2">
-                <Image
-                  src={p.image}
-                  alt={p.name}
-                  width={520}
-                  height={520}
-                  priority={i === 0}
-                  className="max-h-[50vh] w-auto object-contain"
-                />
+                <div className="relative h-[32vh] w-full sm:h-[40vh] md:h-[52vh]">
+                  {visited.has(i) && (
+                    <ProductImage
+                      src={p.heroImage || p.image}
+                      alt={p.name}
+                      fill
+                      sizes="(max-width: 768px) 80vw, 45vw"
+                      priority={i === 0}
+                      className="object-contain"
+                    />
+                  )}
+                </div>
               </div>
 
               {/* Text + button — always RIGHT */}
               <div className="flex w-full flex-col items-center text-center md:w-1/2 md:items-start md:pl-12 md:text-left">
                 <p className="mb-3 font-mono text-label-caps uppercase tracking-widest text-on-surface-variant">
-                  {t(lang, "featuredProduct")}
+                  {t("featuredProduct")}
                 </p>
-                <h1 className="mb-6 font-display text-[44px] font-bold leading-tight text-primary-container md:text-display-lg">
+                <h1 className="mb-4 font-display text-[36px] font-bold leading-tight text-primary-container sm:text-[44px] md:mb-6 md:text-display-lg">
                   {p.name}
                 </h1>
-                <p className="mb-8 max-w-md text-on-surface-variant">{productTagline(p, lang)}</p>
+                <p className="mb-6 max-w-md text-on-surface-variant md:mb-8">{productTagline(p)}</p>
                 <Link href={`/produits/${p.slug}`} className="btn-outline text-lg">
-                  {t(lang, "knowMore")}
+                  {t("knowMore")}
                   <ArrowRight className="h-5 w-5" />
                 </Link>
               </div>
@@ -68,10 +80,14 @@ export function HeroCarousel({ products }: { products: Product[] }) {
             key={p.slug}
             onClick={() => setIndex(i)}
             aria-label={`Voir ${p.name}`}
-            className={`h-2.5 rounded-full transition-all ${
-              i === index ? "w-8 bg-primary-container" : "w-2.5 bg-outline-variant"
-            }`}
-          />
+            className="flex h-6 w-6 items-center justify-center"
+          >
+            <span
+              className={`block h-2.5 rounded-full transition-all ${
+                i === index ? "w-8 bg-primary-container" : "w-2.5 bg-outline-variant"
+              }`}
+            />
+          </button>
         ))}
       </div>
     </header>

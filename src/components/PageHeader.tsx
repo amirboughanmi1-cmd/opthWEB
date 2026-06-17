@@ -12,7 +12,7 @@ export function PageHeader({
     <header className="border-b border-outline-variant bg-surface-gray">
       <div className="container-max py-16 text-center">
         {eyebrow && (
-          <p className="mb-3 font-mono text-label-caps uppercase tracking-widest text-primary-container/70">
+          <p className="mb-3 font-mono text-label-caps uppercase tracking-widest text-primary">
             {eyebrow}
           </p>
         )}

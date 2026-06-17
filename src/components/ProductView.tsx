@@ -1,33 +1,37 @@
-"use client";
-
 import Link from "next/link";
-import { type Product, products, productDescription } from "@/data/products";
+import { type Product, productDescription } from "@/data/products";
 import { getBrand } from "@/data/brands";
-import { getSection, getSubcategoryName, sectionName } from "@/data/categories";
 import { ProductActions } from "./ProductActions";
 import { ProductCard } from "./ProductCard";
-import { ProductImage } from "./ProductImage";
+import { ProductGallery } from "./ProductGallery";
 import { ChevronRight } from "./Icons";
-import { useLang, pick } from "@/i18n/LanguageProvider";
 import { t } from "@/i18n/ui";
 
-export function ProductView({ product }: { product: Product }) {
-  const { lang } = useLang();
-  const brand = getBrand(product.brand);
-  const section = getSection(product.section);
-  const related = products
-    .filter((p) => p.section === product.section && p.slug !== product.slug)
-    .slice(0, 3);
+interface Props {
+  product: Product;
+  /** Up to 3 products from the same section ("Produits similaires"). */
+  related: Product[];
+  /** Display name of the section (breadcrumb + eyebrow). */
+  sectionLabel: string;
+  /** Breadcrumb target: /catalogue?section=… or /optique | /occasion. */
+  sectionHref: string;
+  /** Display name of the type; empty for Optique/Occasion products. */
+  subcategoryName: string;
+}
+
+export function ProductView({ product, related, sectionLabel, sectionHref, subcategoryName }: Props) {
+  // DB products carry brandName from the join; static seeds resolve locally.
+  const brandName = product.brandName ?? getBrand(product.brand)?.name;
 
   return (
     <>
       {/* Breadcrumb */}
       <div className="border-b border-outline-variant bg-surface-gray">
         <nav className="container-max flex flex-wrap items-center gap-2 py-4 font-mono text-label-caps uppercase text-on-surface-variant">
-          <Link href="/catalogue" className="hover:text-primary">{pick(lang, "Catalogue", "Catalog")}</Link>
+          <Link href="/catalogue" className="hover:text-primary">Catalogue</Link>
           <ChevronRight className="h-3 w-3" />
-          <Link href={`/catalogue?section=${product.section}`} className="hover:text-primary">
-            {section ? sectionName(section, lang) : product.section}
+          <Link href={sectionHref} className="hover:text-primary">
+            {sectionLabel}
           </Link>
           <ChevronRight className="h-3 w-3" />
           <span className="text-primary-container">{product.name}</span>
@@ -36,55 +40,38 @@ export function ProductView({ product }: { product: Product }) {
 
       <article className="container-max py-12">
         <div className="grid grid-cols-1 gap-12 md:grid-cols-2">
-          {/* Image */}
-          <div className="flex items-center justify-center rounded-lg border border-outline-variant bg-surface-container-low p-8">
-            <ProductImage
-              src={product.image}
-              alt={product.name}
-              width={560}
-              height={560}
-              priority
-              className="max-h-[460px] w-auto object-contain"
-            />
-          </div>
+          {/* Image gallery — one image renders plainly; several become a carousel */}
+          <ProductGallery
+            images={[product.image, ...(product.images ?? [])].filter(Boolean)}
+            alt={product.name}
+          />
 
           {/* Info */}
           <div className="flex flex-col">
             <p className="mb-2 font-mono text-label-caps uppercase tracking-wide text-on-surface-variant">
-              {section ? sectionName(section, lang) : product.section} / {getSubcategoryName(product.subcategory, lang)}
+              {sectionLabel}
+              {subcategoryName ? ` / ${subcategoryName}` : ""}
             </p>
             <h1 className="mb-3 font-display text-display-md text-primary-container">{product.name}</h1>
-            <p className="mb-4 text-on-surface-variant">
-              {t(lang, "brand")} :{" "}
-              <Link href={`/catalogue?brand=${product.brand}`} className="font-medium text-primary-container hover:text-primary">
-                {brand?.name}
-              </Link>
-            </p>
+            {brandName && (
+              <p className="mb-4 text-on-surface-variant">
+                {t("brand")} :{" "}
+                <Link href={`/catalogue?brand=${product.brand}`} className="font-medium text-primary-container hover:text-primary">
+                  {brandName}
+                </Link>
+              </p>
+            )}
 
-            <span
-              className={`mb-6 w-fit rounded-full px-3 py-1 font-mono text-label-caps uppercase ${
-                product.inStock ? "bg-status-success/10 text-status-success" : "bg-error/10 text-error"
-              }`}
-            >
-              {product.inStock ? t(lang, "inStock") : t(lang, "outOfStock")}
+            <span className="mb-6 w-fit rounded-full bg-primary/10 px-3 py-1 font-mono text-label-caps uppercase text-primary">
+              {t("madeToOrder")}
             </span>
 
-            <p className="mb-6 leading-relaxed text-on-surface">{productDescription(product, lang)}</p>
-
-            {/* Specs */}
-            <div className="mb-8 grid grid-cols-2 gap-4">
-              {product.specs.map((spec) => (
-                <div key={spec.label} className="rounded-lg border border-outline-variant bg-surface-gray p-4">
-                  <p className="font-mono text-label-caps uppercase text-on-surface-variant">{spec.label}</p>
-                  <p className="mt-1 font-display font-semibold text-on-surface">{spec.value}</p>
-                </div>
-              ))}
-            </div>
+            <p className="mb-8 whitespace-pre-line leading-relaxed text-on-surface">{productDescription(product)}</p>
 
             <ProductActions
               productName={product.name}
               productSlug={product.slug}
-              brandName={brand?.name ?? product.brand}
+              brandName={brandName ?? ""}
               brochure={product.brochure}
             />
           </div>
@@ -94,7 +81,7 @@ export function ProductView({ product }: { product: Product }) {
         {related.length > 0 && (
           <section className="mt-16">
             <h2 className="mb-8 font-display text-headline-lg text-primary-container">
-              {pick(lang, "Produits similaires", "Related products")}
+              Produits similaires
             </h2>
             <div className="grid grid-cols-1 gap-gutter sm:grid-cols-2 lg:grid-cols-3">
               {related.map((p) => (

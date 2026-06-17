@@ -49,6 +49,7 @@ const config: Config = {
         "error-container": "#ffdad6",
         "on-error-container": "#93000a",
         whatsapp: "#25D366",
+        "whatsapp-dark": "#0a7d3f",
       },
       fontFamily: {
         sans: ["var(--font-hanken)", "system-ui", "sans-serif"],
@@ -82,12 +83,6 @@ const config: Config = {
           "0%": { transform: "translateX(0)" },
           "100%": { transform: "translateX(-50%)" },
         },
-        verticalCarousel: {
-          "0%, 28%": { transform: "translateY(0)" },
-          "33.33%, 61.33%": { transform: "translateY(-25%)" },
-          "66.66%, 94.66%": { transform: "translateY(-50%)" },
-          "100%": { transform: "translateY(-75%)" },
-        },
         fadeIn: {
           from: { opacity: "0", transform: "translateY(8px)" },
           to: { opacity: "1", transform: "translateY(0)" },
@@ -95,7 +90,6 @@ const config: Config = {
       },
       animation: {
         scroll: "scroll 30s linear infinite",
-        verticalCarousel: "verticalCarousel 15s cubic-bezier(0.65,0,0.35,1) infinite",
         fadeIn: "fadeIn 0.3s ease-out",
       },
     },

@@ -5,8 +5,9 @@ import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
 import { CookieBanner } from "@/components/CookieBanner";
-import { LanguageProvider } from "@/i18n/LanguageProvider";
 import { site } from "@/lib/site";
+import { SITE_URL } from "@/lib/site-url";
+import { getCatalog } from "@/lib/server-data";
 
 const hanken = Hanken_Grotesk({
   subsets: ["latin"],
@@ -23,6 +24,7 @@ const jetbrains = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: {
     default: `${site.name}`,
     template: `%s — ${site.name}`,
@@ -43,25 +45,30 @@ export const metadata: Metadata = {
     description: "Catalogue d'équipements ophtalmiques de haute précision.",
     type: "website",
     locale: "fr_FR",
-    images: ["/brand/ophtahealth-logo.webp"],
+    // public/ is empty — the logo lives on ImageKit (absolute URL required by OG anyway).
+    images: ["https://ik.imagekit.io/rntjotcwu/brand/ophtahealth-logo.webp?tr=w-1200"],
   },
-  icons: {
-    icon: "/brand/ophtahealth-logo.webp",
-    apple: "/brand/ophtahealth-logo.webp",
-  },
+  // Icons are file-based: src/app/icon.png + src/app/apple-icon.png.
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+/** ISR — the navbar taxonomy is read from Supabase; admin writes revalidate it. */
+export const revalidate = 3600;
+
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const { sections } = await getCatalog();
   return (
     <html lang="fr" className={`${hanken.variable} ${jetbrains.variable}`}>
+      <head>
+        {/* Speed up first image load from the ImageKit CDN (improves LCP). */}
+        <link rel="preconnect" href="https://ik.imagekit.io" crossOrigin="" />
+        <link rel="dns-prefetch" href="https://ik.imagekit.io" />
+      </head>
       <body className="bg-clinical-white font-sans text-body-md text-on-surface antialiased">
-        <LanguageProvider>
-          <Navbar />
-          <main className="min-h-screen">{children}</main>
-          <Footer />
-          <WhatsAppButton />
-          <CookieBanner />
-        </LanguageProvider>
+        <Navbar sections={sections} />
+        <main className="min-h-screen">{children}</main>
+        <Footer />
+        <WhatsAppButton />
+        <CookieBanner />
       </body>
     </html>
   );

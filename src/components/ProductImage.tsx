@@ -23,10 +23,12 @@ interface Props {
 export function ProductImage({ src, alt, width, height, fill, sizes, className, priority }: Props) {
   const [failed, setFailed] = useState(false);
 
-  if (failed) {
+  // Empty src (product without image yet) renders the placeholder directly —
+  // passing "" to next/image triggers a console error and a useless request.
+  if (failed || !src) {
     return (
       <div
-        className={`flex flex-col items-center justify-center gap-2 bg-surface-container-low text-primary-container/40 ${
+        className={`flex flex-col items-center justify-center gap-2 bg-clinical-white text-primary-container/40 ${
           fill ? "absolute inset-0" : ""
         } ${className ?? ""}`}
         style={!fill && width && height ? { width, height } : undefined}
