@@ -1,9 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
-import { type Article, formatDate } from "@/data/blog";
 import { type Article, formatDate, pdfFirstPageImage } from "@/data/blog";
 import { ArrowRight, DownloadIcon } from "@/components/Icons";
-
 /** Force a download: ImageKit uses ?ik-attachment=true. */
 const downloadUrl = (url: string) =>
   url.includes("ik.imagekit.io")
@@ -62,11 +60,6 @@ export function ArticleView({ article, more }: { article: Article; more: Article
               Télécharger le PDF
             </a>
           </div>
-          <iframe
-            src={article.pdf}
-            title={`Document : ${article.title}`}
-            className="h-[75vh] w-full rounded-lg border border-outline-variant bg-clinical-white"
-          />
           <a
             href={article.pdf}
             target="_blank"
