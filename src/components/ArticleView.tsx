@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { type Article, formatDate } from "@/data/blog";
+import { type Article, formatDate, pdfFirstPageImage } from "@/data/blog";
 import { ArrowRight, DownloadIcon } from "@/components/Icons";
 
 /** Force a download: ImageKit uses ?ik-attachment=true. */
@@ -15,6 +16,7 @@ export function ArticleView({ article, more }: { article: Article; more: Article
     .split(/\r?\n\s*\r?\n|\r?\n/)
     .map((p) => p.trim())
     .filter(Boolean);
+  const pdfPreview = article.pdf ? pdfFirstPageImage(article.pdf) : "";
 
   return (
     <article className="container-max max-w-3xl py-12">
@@ -60,11 +62,22 @@ export function ArticleView({ article, more }: { article: Article; more: Article
               Télécharger le PDF
             </a>
           </div>
-          <iframe
-            src={article.pdf}
-            title={`Document : ${article.title}`}
-            className="h-[75vh] w-full rounded-lg border border-outline-variant bg-clinical-white"
-          />
+          <a
+            href={article.pdf}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="group block overflow-hidden rounded-lg border border-outline-variant bg-clinical-white transition-shadow hover:shadow-md"
+          >
+            <div className="relative aspect-[3/4] w-full bg-surface-container-low sm:aspect-[4/5]">
+              <Image
+                src={pdfPreview}
+                alt={`PremiÃ¨re page du document : ${article.title}`}
+                fill
+                className="object-contain"
+                sizes="(max-width: 768px) 100vw, 768px"
+              />
+            </div>
+          </a>
           <p className="mt-2 text-sm text-on-surface-variant">
             Si le document ne s&apos;affiche pas,{" "}
             <a href={article.pdf} target="_blank" rel="noopener noreferrer" className="text-primary-container underline hover:text-primary">
