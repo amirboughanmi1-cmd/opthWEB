@@ -93,30 +93,37 @@ export function Navbar({ sections }: { sections?: Section[] }) {
               <ChevronDown className="h-4 w-4" />
             </button>
             <div className="invisible absolute left-0 top-full z-50 min-w-[220px] rounded border border-primary-container bg-white opacity-0 shadow-lg transition-all group-hover:visible group-hover:opacity-100">
-              {catalogueSections.map((section, i) => (
-                <div key={section.slug} className="group/sub relative">
-                  <Link
-                    href={`/catalogue?section=${section.slug}`}
-                    className={`flex w-full items-center justify-between px-4 py-3 text-left text-on-surface transition-colors hover:bg-surface hover:text-primary ${
-                      i > 0 ? "border-t border-surface-dim" : ""
-                    }`}
-                  >
-                    {sectionName(section).toUpperCase()}
-                    <ChevronRight className="h-4 w-4" />
-                  </Link>
-                  <div className="invisible absolute left-full top-0 z-50 min-w-[280px] rounded border border-primary-container bg-white opacity-0 shadow-lg transition-all group-hover/sub:visible group-hover/sub:opacity-100">
-                    {section.subcategories.map((sub) => (
-                      <Link
-                        key={sub.slug}
-                        href={`/catalogue?section=${section.slug}&sub=${sub.slug}`}
-                        className="block px-4 py-2.5 text-on-surface transition-colors hover:bg-surface hover:text-primary"
-                      >
-                        {sub.name}
-                      </Link>
-                    ))}
+              {catalogueSections.map((section, i) => {
+                const hasSubs = section.subcategories.length > 0;
+                return (
+                  <div key={section.slug} className="group/sub relative">
+                    <Link
+                      href={`/catalogue?section=${section.slug}`}
+                      className={`flex w-full items-center justify-between px-4 py-3 text-left text-on-surface transition-colors hover:bg-surface hover:text-primary ${
+                        i > 0 ? "border-t border-surface-dim" : ""
+                      }`}
+                    >
+                      {sectionName(section).toUpperCase()}
+                      {hasSubs && <ChevronRight className="h-4 w-4" />}
+                    </Link>
+                    {/* Only render the flyout when there ARE subcategories — otherwise an
+                        empty teal-bordered box appears beside the item (the "green line"). */}
+                    {hasSubs && (
+                      <div className="invisible absolute left-full top-0 z-50 min-w-[280px] rounded border border-primary-container bg-white opacity-0 shadow-lg transition-all group-hover/sub:visible group-hover/sub:opacity-100">
+                        {section.subcategories.map((sub) => (
+                          <Link
+                            key={sub.slug}
+                            href={`/catalogue?section=${section.slug}&sub=${sub.slug}`}
+                            className="block px-4 py-2.5 text-on-surface transition-colors hover:bg-surface hover:text-primary"
+                          >
+                            {sub.name}
+                          </Link>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 

@@ -16,8 +16,10 @@ interface LoaderArgs {
 }
 
 function ikTransforms(url: string, width: number): string {
-  const isPdf = /\.pdf(\?|$)/i.test(url);
-  const tr = isPdf ? `tr=w-${width},pg-1,f-jpg` : `tr=w-${width},c-at_max,f-auto`;
+  // PDF first-page render uses the path-style `…/ik-thumbnail.jpg`; only width
+  // applies there. Everything else gets resize-down + auto AVIF/WebP.
+  const isPdfThumb = url.includes("/ik-thumbnail.");
+  const tr = isPdfThumb ? `tr=w-${width}` : `tr=w-${width},c-at_max,f-auto`;
   return url + (url.includes("?") ? "&" : "?") + tr;
 }
 

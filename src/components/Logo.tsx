@@ -16,6 +16,7 @@ export function Logo({ className = "", showText = true }: { className?: string; 
         width={426}
         height={267}
         priority
+        unoptimized
         className="h-11 w-auto object-contain"
       />
       {showText && (

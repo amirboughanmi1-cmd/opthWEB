@@ -36,7 +36,15 @@ export function Footer() {
           </p>
           <div className="flex items-center gap-4">
             <p>
-              {t("developedBy")} {site.developer}
+              {t("developedBy")}{" "}
+              <a
+                href="https://www.instagram.com/hamzaamiri_officiel/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-medium text-on-surface-variant underline decoration-dotted underline-offset-2 transition-colors hover:text-primary-container"
+              >
+                {site.developer}
+              </a>
             </p>
             <Link
               href="/admin"

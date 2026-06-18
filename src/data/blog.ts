@@ -23,14 +23,16 @@ export const articles: Article[] = [];
 export const formatDate = (iso: string) =>
   new Date(iso).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
 
-const withImageKitTransform = (url: string, transform: string): string => {
+/**
+ * First page of a PDF as an image.
+ * ImageKit renders it via the named `ik-thumbnail` path (this account doesn't
+ * have the `tr=pg-1` query transform enabled — it returns the raw PDF). Width
+ * is applied later by the next/image loader.
+ */
+export const pdfFirstPageImage = (url: string): string => {
   if (!url.includes("ik.imagekit.io")) return url;
-  const joiner = url.includes("?") ? "&" : "?";
-  return `${url}${joiner}tr=${transform}`;
+  return `${url.split("?")[0]}/ik-thumbnail.jpg`;
 };
-
-export const pdfFirstPageImage = (url: string): string =>
-  withImageKitTransform(url, "pg-1,w-1200,f-jpg,q-85");
 
 /**
  * Card thumbnail for an article: the cover image if set, otherwise the attached

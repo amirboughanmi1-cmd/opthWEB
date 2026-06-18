@@ -448,31 +448,56 @@ function ProductForm({ product, onClose }: { product: Product | null; onClose: (
           </div>
         </Field>
 
-        {/* Brochure (PDF) — uploaded to ImageKit, URL stored in Supabase */}
+        {/* Brochure (PDF) — admin chooses per product whether one exists.
+            Unchecked → the product page shows only the WhatsApp button. */}
         <Field label="Brochure">
           <div className="flex flex-col gap-3">
-            <input
-              type="file"
-              accept="application/pdf"
-              disabled={uploading !== null}
-              onChange={(e) => handleBrochure(e.target.files?.[0])}
-              className="text-sm"
-            />
-            {uploading === "brochure" ? (
-              <span className="text-sm text-on-surface-variant">Envoi de la brochure…</span>
-            ) : form.brochure ? (
-              <span className="inline-flex items-center gap-2 text-sm text-status-success">
-                <CheckIcon className="h-4 w-4" /> Brochure attachée
-                <button
-                  type="button"
-                  onClick={() => set("brochure", undefined)}
-                  className="text-error underline"
-                >
-                  retirer
-                </button>
-              </span>
+            <label className="inline-flex items-center gap-2 text-sm text-on-surface">
+              <input
+                type="checkbox"
+                checked={hasBrochure}
+                onChange={(e) => {
+                  const on = e.target.checked;
+                  setHasBrochure(on);
+                  if (!on) set("brochure", undefined); // drop the file when disabled
+                }}
+                className="h-4 w-4 accent-primary"
+              />
+              Ce produit possède une brochure téléchargeable
+            </label>
+
+            {hasBrochure ? (
+              <>
+                <input
+                  type="file"
+                  accept="application/pdf"
+                  disabled={uploading !== null}
+                  onChange={(e) => handleBrochure(e.target.files?.[0])}
+                  className="text-sm"
+                />
+                {uploading === "brochure" ? (
+                  <span className="text-sm text-on-surface-variant">Envoi de la brochure…</span>
+                ) : form.brochure ? (
+                  <span className="inline-flex items-center gap-2 text-sm text-status-success">
+                    <CheckIcon className="h-4 w-4" /> Brochure attachée
+                    <button
+                      type="button"
+                      onClick={() => set("brochure", undefined)}
+                      className="text-error underline"
+                    >
+                      retirer
+                    </button>
+                  </span>
+                ) : (
+                  <span className="text-sm text-on-surface-variant">
+                    Aucun fichier — téléversez le PDF de la brochure.
+                  </span>
+                )}
+              </>
             ) : (
-              <span className="text-sm text-on-surface-variant">Aucune brochure</span>
+              <span className="text-xs text-on-surface-variant">
+                La fiche produit n&apos;affichera que le bouton WhatsApp (pas de bouton brochure).
+              </span>
             )}
           </div>
         </Field>

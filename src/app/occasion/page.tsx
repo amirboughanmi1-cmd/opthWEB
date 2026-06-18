@@ -4,7 +4,7 @@ import { t } from "@/i18n/ui";
 
 export const metadata: Metadata = {
   title: "Occasion",
-    description: "Equipements d'occasion reconditionnes et materiel de seconde main d'OphtaHealth.",
+  description: "Équipements d'occasion reconditionnés et matériel de seconde main d'OphtaHealth.",
 };
 
 export default function OccasionPage() {
@@ -13,7 +13,7 @@ export default function OccasionPage() {
       section="occasion"
       title={t("occasion")}
       comingSoonTitle={t("occasion")}
-      comingSoon="Vous recherchez un equipement ophtalmologique d'occasion ou souhaitez vendre le votre ? Profitez de notre plateforme specialisee pour acheter et vendre en toute confiance. Contactez-nous des aujourd'hui pour publier votre annonce ou trouver l'equipement qu'il vous faut."
+      comingSoon="Vous recherchez un équipement ophtalmologique d'occasion ou souhaitez vendre le vôtre ? Profitez de notre plateforme spécialisée pour acheter et vendre en toute confiance. Contactez-nous dès aujourd'hui pour publier votre annonce ou trouver l'équipement qu'il vous faut."
       icon="tag"
     />
   );
