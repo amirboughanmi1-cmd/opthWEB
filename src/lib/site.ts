@@ -5,7 +5,7 @@ export const site = {
   tagline: "Clinical Excellence in Ophthalmology",
   taglineFr: "L'excellence clinique en ophtalmologie",
   // International format without "+" or spaces, used to build wa.me links.
-  whatsappNumber: "21622255629",
+  whatsappNumber: "216 99 255 688",
   phonePrimary: "+216 22 255 629",
   phoneSecondary: "+216 99 255 688",
   email: "info@ophtahealth.com",
