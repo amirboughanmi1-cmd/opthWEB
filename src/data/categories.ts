@@ -53,7 +53,7 @@ export const sections: Section[] = [
       { slug: "echographie-ab", name: "Échographie AB" },
       { slug: "topographe-corneen", name: "Topographe cornéen" },
       { slug: "plateforme-secheresse-oculaire", name: "Plateforme sur la sécheresse oculaire" },
-      { slug: "soulagement-secheresse-oculaire", name: "Soulagement de la sécheresse oculaire" },
+      { slug: "soulagement-secheresse-oculaire", name: "Traitement de la sécheresse oculaire" },
     ],
   },
   {
