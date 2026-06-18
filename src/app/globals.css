@@ -6,9 +6,9 @@
   --container-max: 1280px;
 }
 
-html {
-  scroll-behavior: smooth;
-}
+/* NOTE: no global `scroll-behavior: smooth` — it makes Next.js animate the
+   scroll-to-top on route changes, which leaves new pages looking scrolled
+   down. Navigation must jump to the top instantly. */
 
 body {
   background-color: #ffffff;

@@ -69,6 +69,12 @@ export function AdminDashboard() {
     if (authed === false) router.replace("/admin/login");
   }, [authed, router]);
 
+  // Tabs swap via state (not navigation), so the scroll position would carry
+  // over — opening a short panel while scrolled down hides the nav. Reset it.
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [tab]);
+
   if (!authed) {
     return <div className="container-max py-24 text-center text-on-surface-variant">Chargement…</div>;
   }
