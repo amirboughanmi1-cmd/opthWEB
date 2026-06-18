@@ -6,8 +6,8 @@ import { getCatalog } from "@/lib/server-data";
 import { isPartnerBrand } from "@/data/brands";
 import { STANDALONE_SECTIONS } from "@/data/categories";
 import { ArrowRight, SupportIcon } from "@/components/Icons";
+import { MapEmbed } from "@/components/MapEmbed";
 import { t } from "@/i18n/ui";
-import { site } from "@/lib/site";
 
 /** ISR safety net — the admin dashboard revalidates on-demand after writes. */
 export const revalidate = 3600;
@@ -71,15 +71,7 @@ export default async function HomePage() {
               </Link>
             </div>
             <div className="h-[360px] overflow-hidden rounded-lg border border-outline-variant">
-              <iframe
-                title="Localisation OphtaHealth"
-                width="100%"
-                height="100%"
-                style={{ border: 0 }}
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-                src={site.mapEmbedUrl}
-              />
+              <MapEmbed />
             </div>
           </div>
         </div>

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { PageHeader } from "@/components/PageHeader";
 import { Accordion, type QA } from "@/components/Accordion";
+import { MapEmbed } from "@/components/MapEmbed";
 import { site, whatsappLink } from "@/lib/site";
 import { PhoneIcon, MailIcon, LocationIcon, WhatsAppIcon } from "@/components/Icons";
 
@@ -72,15 +73,7 @@ export default function SupportPage() {
               {site.address}
             </p>
             <div className="h-[320px] overflow-hidden rounded-lg border border-outline-variant">
-              <iframe
-                title="Localisation OphtaHealth"
-                width="100%"
-                height="100%"
-                style={{ border: 0 }}
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-                src={site.mapEmbedUrl}
-              />
+              <MapEmbed />
             </div>
           </div>
         </div>
