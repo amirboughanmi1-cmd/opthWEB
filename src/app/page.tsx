@@ -60,10 +60,7 @@ export default async function HomePage() {
             <div>
               <h2 className="mb-6 font-display text-headline-lg text-primary-container">{t("about")}</h2>
               <p className="mb-6 leading-relaxed text-on-surface-variant">
-                OphtaHealth équipe les professionnels de la santé visuelle avec des technologies de
-                pointe. Notre engagement : fournir des outils de diagnostic de haute fidélité et des
-                instruments chirurgicaux garantissant précision, fiabilité et de meilleurs résultats
-                pour les patients.
+                {"OPHTAHEALTH est une société tunisienne spécialisée dans l'équipement ophtalmologique et optique. Notre mission est de fournir aux professionnels de la santé visuelle des technologies innovantes, fiables et performantes pour le diagnostic, le traitement et le suivi des patients. Grâce à une sélection rigoureuse de partenaires internationaux, OPHTAHEALTH accompagne les ophtalmologistes, opticiens et cliniques avec des solutions de qualité, un service technique réactif et un support de proximité."}
               </p>
               <Link href="/a-propos" className="btn-outline">
                 {t("learnMore")}
