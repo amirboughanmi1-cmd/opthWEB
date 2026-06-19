@@ -51,8 +51,8 @@ export const metadata: Metadata = {
   verification: {
     // Bing Webmaster Tools site ownership (keep even after verification).
     other: { "msvalidate.01": "D74AFD7A9729B47F94FD98204632B716" },
-    // Google Search Console: add here once you start it →
-    // google: "PASTE-GOOGLE-VERIFICATION-CODE",
+    // Google Search Console site ownership (keep even after verification).
+    google: "Z4mEZ6Y1HPv46DnT3jyhcBw-AxZsFkDkWPWVng6PxxU",
   },
   // Icons are file-based: src/app/icon.png + src/app/apple-icon.png.
 };
