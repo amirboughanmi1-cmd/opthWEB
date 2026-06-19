@@ -39,7 +39,7 @@ export default async function AboutPage() {
       <PageHeader
         eyebrow="Qui sommes-nous"
         title="À Propos d'OphtaHealth"
-        subtitle="Spécialiste de la distribution d'équipements médicaux ophtalmiques pour les professionnels de la santé visuelle."
+        subtitle="Spécialiste de la distribution d'équipements médicaux ophtalmiques et optique pour les professionnels de la santé visuelle."
       />
 
       {/* Mission */}

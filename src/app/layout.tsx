@@ -48,6 +48,12 @@ export const metadata: Metadata = {
     // public/ is empty — the logo lives on ImageKit (absolute URL required by OG anyway).
     images: ["https://ik.imagekit.io/rntjotcwu/brand/ophtahealth-logo.webp?tr=w-1200"],
   },
+  verification: {
+    // Bing Webmaster Tools site ownership (keep even after verification).
+    other: { "msvalidate.01": "D74AFD7A9729B47F94FD98204632B716" },
+    // Google Search Console: add here once you start it →
+    // google: "PASTE-GOOGLE-VERIFICATION-CODE",
+  },
   // Icons are file-based: src/app/icon.png + src/app/apple-icon.png.
 };
 
