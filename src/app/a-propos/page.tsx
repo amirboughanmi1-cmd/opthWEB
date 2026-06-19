@@ -47,14 +47,10 @@ export default async function AboutPage() {
         <div>
           <h2 className="mb-6 font-display text-headline-lg text-primary-container">Notre Mission</h2>
           <p className="mb-4 leading-relaxed text-on-surface-variant">
-            OphtaHealth est une société spécialisée dans la distribution d'équipements médicaux
-            ophtalmiques. Nous représentons plusieurs marques partenaires de renom et proposons un
-            catalogue structuré d'appareils destinés aux professionnels de la santé visuelle.
+            OPHTAHEALTH est une société tunisienne spécialisée dans l’équipement ophtalmologique et optique. Notre mission est de fournir aux professionnels de la santé visuelle des technologies innovantes, fiables et performantes pour le diagnostic, le traitement et le suivi des patients. Grâce à une sélection rigoureuse de partenaires internationaux.
           </p>
           <p className="leading-relaxed text-on-surface-variant">
-            Notre engagement : faire le lien entre l'ingénierie technologique de pointe et la
-            pratique clinique quotidienne, afin de garantir précision, fiabilité et de meilleurs
-            résultats pour les patients.
+            OPHTAHEALTH accompagne les ophtalmologistes, opticiens et cliniques avec des solutions de qualité, un service technique réactif et un support de proximité.
           </p>
         </div>
         <div className="grid grid-cols-3 gap-4 text-center">
