@@ -18,8 +18,7 @@ const DEFAULT_PATHS = [
   "/a-propos",
   "/optique",
   "/occasion",
-  "/blog",
-  "/blog/[slug]",
+  "/sav", // product list feeds the SAV form's autocomplete
   "/produits/[slug]",
 ];
 

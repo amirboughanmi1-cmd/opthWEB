@@ -5,7 +5,7 @@ import { RechercheClient } from "@/components/RechercheClient";
 export const metadata: Metadata = {
   title: "Recherche",
   description:
-    "Recherchez dans tout le site OphtaHealth : produits, catégories, marques, articles de blog et pages d'information.",
+    "Recherchez dans tout le site OphtaHealth : produits, catégories, marques et pages d'information.",
 };
 
 export default function RecherchePage() {

@@ -5,7 +5,7 @@ const fr = {
   categories: "Ophtalmologie",
   optique: "Optique",
   occasion: "Occasion",
-  blog: "Blog",
+  sav: "SAV",
   about: "À Propos",
   contact: "Contact",
   search: "Rechercher...",

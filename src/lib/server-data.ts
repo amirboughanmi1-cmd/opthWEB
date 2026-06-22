@@ -10,13 +10,11 @@ import "server-only";
 import { cache } from "react";
 import { getSupabaseServer } from "@/lib/supabase/server";
 import {
-  SELECT_ARTICLES,
   SELECT_BRANDS,
   SELECT_FAMILIES,
   SELECT_PRODUCTS,
   SELECT_SUBCATEGORIES,
   SELECT_TYPES,
-  mapArticles,
   mapBrands,
   mapProducts,
   mapSections,
@@ -24,11 +22,9 @@ import {
 import type { Brand } from "@/data/brands";
 import type { Section } from "@/data/categories";
 import type { Product } from "@/data/products";
-import type { Article } from "@/data/blog";
 import { brands as staticBrands } from "@/data/brands";
 import { sections as staticSections } from "@/data/categories";
 import { products as staticProducts } from "@/data/products";
-import { articles as staticArticles } from "@/data/blog";
 
 export interface PublicCatalog {
   brands: Brand[];
@@ -59,24 +55,5 @@ export const getCatalog = cache(async (): Promise<PublicCatalog> => {
   } catch (e) {
     console.error("[server-data] Supabase indisponible — fallback sur le catalogue statique :", e);
     return { brands: staticBrands, sections: staticSections, products: staticProducts };
-  }
-});
-
-
-/**
- * Published articles, newest first (RLS already hides unpublished rows from
- * the anon client). Falls back to the static demo articles on fetch failure.
- */
-export const getArticles = cache(async (): Promise<Article[]> => {
-  try {
-    const { data, error } = await getSupabaseServer()
-      .from("articles")
-      .select(SELECT_ARTICLES)
-      .order("created_at", { ascending: false });
-    if (error) throw new Error(error.message);
-    return mapArticles(data ?? []);
-  } catch (e) {
-    console.error("[server-data] Articles indisponibles — fallback sur le blog statique :", e);
-    return staticArticles;
   }
 });

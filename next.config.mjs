@@ -1,8 +1,16 @@
 import withBundleAnalyzer from "@next/bundle-analyzer";
+import { fileURLToPath } from "node:url";
+import { dirname } from "node:path";
+
+// ESM has no __dirname — derive it so we can pin Turbopack's workspace root.
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  // Pin the workspace root: a stray package-lock.json in a parent directory
+  // makes Next infer the wrong root and warn on startup. This silences it.
+  turbopack: { root: __dirname },
   images: {
     // All images are delivered via ImageKit with on-the-fly f-auto + responsive
     // widths. See src/lib/imagekitLoader.ts (admin data: previews pass through).
@@ -28,7 +36,7 @@ const nextConfig = {
       "style-src 'self' 'unsafe-inline'",
       `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
       "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://ik.imagekit.io https://upload.imagekit.io",
-      // Google Maps embed (contact) + ImageKit PDF viewer (blog article documents).
+      // Google Maps embed (contact page); ImageKit allowed for inline previews.
       "frame-src 'self' https://maps.google.com https://www.google.com https://ik.imagekit.io",
       "upgrade-insecure-requests",
     ].join("; ");

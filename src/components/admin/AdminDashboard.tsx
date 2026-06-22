@@ -14,14 +14,12 @@ import {
   deleteCategory,
   addType,
   deleteType,
-  saveArticle,
-  deleteArticle,
   deleteLead,
+  deleteReclamation,
   slugify,
   type Product,
   type Brand,
   type Section,
-  type Article,
 } from "@/lib/store";
 import { STANDALONE_SECTIONS } from "@/data/categories";
 import { uploadToImageKit } from "@/lib/uploadToImageKit";
@@ -37,12 +35,13 @@ import {
   UsersIcon,
   CloseIcon,
   CheckIcon,
+  WrenchIcon,
 } from "@/components/Icons";
 
 const inputCls =
   "w-full rounded border border-outline-variant bg-clinical-white px-3 py-2 text-on-surface outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/30";
 
-type Tab = "overview" | "products" | "categories" | "types" | "brands" | "articles" | "leads";
+type Tab = "overview" | "products" | "categories" | "types" | "brands" | "reclamations" | "leads";
 
 const tabs: { id: Tab; label: string; icon: (p: { className?: string }) => JSX.Element }[] = [
   { id: "overview", label: "Vue d'ensemble", icon: GridIcon },
@@ -50,7 +49,7 @@ const tabs: { id: Tab; label: string; icon: (p: { className?: string }) => JSX.E
   { id: "categories", label: "Catégories", icon: GridIcon },
   { id: "types", label: "Types", icon: TagIcon },
   { id: "brands", label: "Marques", icon: TagIcon },
-  { id: "articles", label: "Articles", icon: PencilIcon },
+  { id: "reclamations", label: "Réclamations", icon: WrenchIcon },
   { id: "leads", label: "Leads", icon: UsersIcon },
 ];
 
@@ -118,14 +117,15 @@ export function AdminDashboard() {
         </button>
       </aside>
 
-      {/* Content */}
-      <section>
+      {/* Content — min-w-0 lets the 1fr grid track shrink so long content
+          (e.g. an unbroken réclamation string) wraps instead of overflowing. */}
+      <section className="min-w-0">
         {tab === "overview" && <Overview onNav={setTab} />}
         {tab === "products" && <ProductsPanel />}
         {tab === "categories" && <CategoriesPanel />}
         {tab === "types" && <TypesPanel />}
         {tab === "brands" && <BrandsPanel />}
-        {tab === "articles" && <ArticlesPanel />}
+        {tab === "reclamations" && <ReclamationsPanel />}
         {tab === "leads" && <LeadsPanel />}
       </section>
     </div>
@@ -139,7 +139,7 @@ function Overview({ onNav }: { onNav: (t: Tab) => void }) {
     { label: "Produits", value: data.products.length, tab: "products" as Tab, icon: BoxIcon },
     { label: "Catégories", value: data.sections.length, tab: "categories" as Tab, icon: GridIcon },
     { label: "Marques", value: data.brands.length, tab: "brands" as Tab, icon: TagIcon },
-    { label: "Articles", value: data.articles.length, tab: "articles" as Tab, icon: PencilIcon },
+    { label: "Réclamations", value: data.reclamations.length, tab: "reclamations" as Tab, icon: WrenchIcon },
     { label: "Leads", value: data.leads.length, tab: "leads" as Tab, icon: UsersIcon },
   ];
   return (
@@ -824,253 +824,89 @@ function BrandForm({ brand, onClose }: { brand: Brand | null; onClose: () => voi
   );
 }
 
-/* ───────────────── Articles (blog) ───────────────── */
-function ArticlesPanel() {
+/* ───────────────── Réclamations (SAV) ───────────────── */
+function ReclamationsPanel() {
   const data = useAdminData();
-  const [editing, setEditing] = useState<Article | null>(null);
-  const [creating, setCreating] = useState(false);
-  const fmt = (iso: string) => new Date(iso).toLocaleDateString("fr-FR", { dateStyle: "medium" });
+  const fmt = (iso: string) =>
+    new Date(iso).toLocaleString("fr-FR", { dateStyle: "short", timeStyle: "short" });
 
   return (
     <div>
-      <PanelHeader
-        title="Articles"
-        action={
-          <button onClick={() => setCreating(true)} className="btn-solid">
-            <PlusIcon className="h-5 w-5" /> Ajouter un article
-          </button>
-        }
-      />
-      <div className="overflow-x-auto rounded-lg border border-outline-variant">
-        <table className="w-full min-w-[680px] text-left text-sm">
-          <thead className="bg-surface-gray font-mono text-label-caps uppercase text-on-surface-variant">
-            <tr>
-              <th className="px-4 py-3">Article</th>
-              <th className="px-4 py-3">Catégorie</th>
-              <th className="px-4 py-3">Date</th>
-              <th className="px-4 py-3">Statut</th>
-              <th className="px-4 py-3 text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-outline-variant">
-            {data.articles.map((a) => (
-              <tr key={a.slug} className="bg-clinical-white">
-                <td className="px-4 py-3">
-                  <div className="flex items-center gap-3">
-                    <div className="relative h-10 w-14 shrink-0 overflow-hidden rounded bg-surface-container-low">
-                      {a.cover ? (
-                        <Image src={a.cover} alt={a.title} fill className="object-cover" />
-                      ) : (
-                        <span className="grid h-full w-full place-items-center text-[10px] text-on-surface-variant">—</span>
-                      )}
-                    </div>
-                    <span className="font-medium text-on-surface">{a.title}</span>
-                  </div>
-                </td>
-                <td className="px-4 py-3 text-on-surface-variant">{a.category}</td>
-                <td className="px-4 py-3 text-on-surface-variant">{fmt(a.date)}</td>
-                <td className="px-4 py-3">
-                  <span
-                    className={`rounded-full px-2.5 py-0.5 font-mono text-label-caps uppercase ${
-                      a.published !== false
-                        ? "bg-status-success/10 text-status-success"
-                        : "bg-outline-variant/40 text-on-surface-variant"
-                    }`}
-                  >
-                    {a.published !== false ? "Publié" : "Brouillon"}
-                  </span>
-                </td>
-                <td className="px-4 py-3">
-                  <div className="flex justify-end gap-2">
-                    <IconBtn label="Modifier" onClick={() => setEditing(a)}>
-                      <PencilIcon className="h-4 w-4" />
-                    </IconBtn>
-                    <IconBtn
-                      label="Supprimer"
-                      danger
-                      onClick={() => {
-                        if (confirm(`Supprimer "${a.title}" ?`)) deleteArticle(a.slug).catch(notifyError);
-                      }}
-                    >
-                      <TrashIcon className="h-4 w-4" />
-                    </IconBtn>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {data.ready && data.articles.length === 0 && (
-          <p className="bg-clinical-white px-4 py-6 text-center text-sm text-on-surface-variant">
-            Aucun article — ajoutez le premier, ou exécutez seed-blog.sql pour importer les articles de démonstration.
-          </p>
-        )}
-      </div>
-
-      {(creating || editing) && (
-        <ArticleForm
-          article={editing}
-          onClose={() => {
-            setCreating(false);
-            setEditing(null);
-          }}
-        />
+      <PanelHeader title="Réclamations — Service Après-Vente" />
+      {data.reclamations.length === 0 ? (
+        <div className="rounded-lg border border-dashed border-outline-variant bg-surface-gray p-12 text-center text-on-surface-variant">
+          Aucune réclamation pour le moment. Les demandes envoyées depuis la page SAV apparaîtront ici.
+        </div>
+      ) : (
+        <div className="flex flex-col gap-4">
+          {data.reclamations.map((r) => (
+            <article key={r.id} className="rounded-lg border border-outline-variant bg-clinical-white p-5">
+              <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <h3 className="break-words font-display text-lg font-semibold text-on-surface">{r.name}</h3>
+                  <p className="break-words text-sm text-on-surface-variant">
+                    <a href={`tel:${r.phone}`} className="hover:text-primary">{r.phone}</a>
+                    <span className="mx-2">·</span>
+                    {fmt(r.date)}
+                  </p>
+                </div>
+                <IconBtn
+                  label="Supprimer"
+                  danger
+                  onClick={() => {
+                    if (confirm("Supprimer cette réclamation ?")) deleteReclamation(r.id).catch(notifyError);
+                  }}
+                >
+                  <TrashIcon className="h-4 w-4" />
+                </IconBtn>
+              </div>
+              {(r.product || r.serial) && (
+                <div className="mb-3 flex flex-wrap gap-2">
+                  {r.product && (
+                    <span className="max-w-full break-words rounded-full bg-primary/10 px-3 py-1 font-mono text-label-caps uppercase text-primary">
+                      {r.product}
+                    </span>
+                  )}
+                  {r.serial && (
+                    <span className="max-w-full break-words rounded-full bg-surface-gray px-3 py-1 font-mono text-label-caps uppercase text-on-surface-variant">
+                      N° série : {r.serial}
+                    </span>
+                  )}
+                </div>
+              )}
+              <ReclamationMessage text={r.message} />
+            </article>
+          ))}
+        </div>
       )}
     </div>
   );
 }
 
-function ArticleForm({ article, onClose }: { article: Article | null; onClose: () => void }) {
-  const isEdit = !!article;
-  const [form, setForm] = useState<Article>(
-    article ?? {
-      slug: "",
-      title: "",
-      excerpt: "",
-      category: "Actualités",
-      date: new Date().toISOString(),
-      cover: "",
-      body: "",
-      published: true,
-    }
-  );
-  const [uploading, setUploading] = useState<"cover" | "pdf" | null>(null);
-  const [saving, setSaving] = useState(false);
-
-  const set = <K extends keyof Article>(k: K, v: Article[K]) => setForm((f) => ({ ...f, [k]: v }));
-
-  const handleCover = async (file?: File) => {
-    if (!file) return;
-    setUploading("cover");
-    try {
-      const { url } = await uploadToImageKit(file, { folder: "articles" });
-      set("cover", url);
-    } catch (e) {
-      notifyError(e);
-    } finally {
-      setUploading(null);
-    }
-  };
-
-  const handlePdf = async (file?: File) => {
-    if (!file) return;
-    setUploading("pdf");
-    try {
-      const { url } = await uploadToImageKit(file, { folder: "articles" });
-      set("pdf", url);
-    } catch (e) {
-      notifyError(e);
-    } finally {
-      setUploading(null);
-    }
-  };
-
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const slug = isEdit ? form.slug : slugify(form.title);
-    setSaving(true);
-    try {
-      await saveArticle({ ...form, slug }, article?.slug);
-      onClose();
-    } catch (err) {
-      notifyError(err);
-    } finally {
-      setSaving(false);
-    }
-  };
-
+/** Réclamation message: clamped to 3 lines with a "Voir tout" toggle; long
+    unbroken strings wrap (break-words) so they never overflow the card. */
+function ReclamationMessage({ text }: { text: string }) {
+  const [expanded, setExpanded] = useState(false);
+  const isLong = text.length > 220 || text.split(/\r?\n/).length > 4;
   return (
-    <Modal title={isEdit ? `Modifier ${article?.title}` : "Nouvel article"} onClose={onClose} wide>
-      <form onSubmit={submit} className="flex flex-col gap-4">
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Field label="Titre">
-            <input className={inputCls} required value={form.title} onChange={(e) => set("title", e.target.value)} />
-          </Field>
-          <Field label="Catégorie">
-            <input
-              className={inputCls}
-              placeholder="Technologie, Conseils Cliniques…"
-              value={form.category}
-              onChange={(e) => set("category", e.target.value)}
-            />
-          </Field>
-        </div>
-
-        {/* Cover — uploaded to ImageKit (signed), URL stored in Supabase */}
-        <Field label="Image de couverture">
-          <div className="flex items-center gap-4">
-            <div className="relative h-20 w-32 shrink-0 overflow-hidden rounded border border-outline-variant bg-surface-container-low">
-              {form.cover && <Image src={form.cover} alt="" fill className="object-cover" />}
-            </div>
-            <div className="flex flex-col gap-2">
-              <input
-                type="file"
-                accept="image/*"
-                disabled={uploading !== null}
-                onChange={(e) => handleCover(e.target.files?.[0])}
-                className="text-sm"
-              />
-              {uploading === "cover" ? (
-                <span className="text-sm text-on-surface-variant">Envoi de l&apos;image…</span>
-              ) : (
-                <input
-                  className={inputCls}
-                  placeholder="https://ik.imagekit.io/…"
-                  value={form.cover}
-                  onChange={(e) => set("cover", e.target.value)}
-                />
-              )}
-            </div>
-          </div>
-        </Field>
-
-        {/* PDF — l'article peut être un document à consulter/télécharger */}
-        <Field label="Document PDF">
-          <div className="flex flex-wrap items-center gap-3">
-            <input
-              type="file"
-              accept="application/pdf"
-              disabled={uploading !== null}
-              onChange={(e) => handlePdf(e.target.files?.[0])}
-              className="text-sm"
-            />
-            {uploading === "pdf" ? (
-              <span className="text-sm text-on-surface-variant">Envoi du PDF…</span>
-            ) : form.pdf ? (
-              <span className="inline-flex items-center gap-2 text-sm text-status-success">
-                <CheckIcon className="h-4 w-4" /> PDF attaché
-                <button type="button" onClick={() => set("pdf", undefined)} className="text-error underline">
-                  retirer
-                </button>
-              </span>
-            ) : (
-              <span className="text-sm text-on-surface-variant">Aucun PDF (max 10 Mo)</span>
-            )}
-          </div>
-        </Field>
-
-        <Field label="Contenu">
-          <textarea
-            className={inputCls}
-            rows={10}
-            required={!form.pdf}
-            value={form.body ?? ""}
-            onChange={(e) => set("body", e.target.value)}
-          />
-        </Field>
-
-        <div className="flex flex-wrap gap-6">
-          <Toggle label="Publié (visible sur le blog)" checked={form.published !== false} onChange={(v) => set("published", v)} />
-        </div>
-
-        <div className="mt-2 flex justify-end gap-3 border-t border-outline-variant pt-4">
-          <button type="button" onClick={onClose} className="btn-outline">Annuler</button>
-          <button type="submit" disabled={saving || uploading !== null} className="btn-solid disabled:opacity-60">
-            {saving ? "Enregistrement…" : isEdit ? "Enregistrer" : "Créer l'article"}
-          </button>
-        </div>
-      </form>
-    </Modal>
+    <div>
+      <p
+        className={`whitespace-pre-wrap break-words leading-relaxed text-on-surface ${
+          isLong && !expanded ? "line-clamp-3" : ""
+        }`}
+      >
+        {text}
+      </p>
+      {isLong && (
+        <button
+          type="button"
+          onClick={() => setExpanded((v) => !v)}
+          className="mt-2 text-sm font-medium text-primary-container underline-offset-2 hover:underline"
+        >
+          {expanded ? "Voir moins" : "Voir tout"}
+        </button>
+      )}
+    </div>
   );
 }
 

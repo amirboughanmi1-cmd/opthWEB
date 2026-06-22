@@ -15,13 +15,11 @@
 import { useSyncExternalStore } from "react";
 import { getSupabaseBrowser } from "@/lib/supabase/client";
 import {
-  SELECT_ARTICLES,
   SELECT_BRANDS,
   SELECT_FAMILIES,
   SELECT_PRODUCTS,
   SELECT_SUBCATEGORIES,
   SELECT_TYPES,
-  mapArticles,
   mapBrands,
   mapProducts,
   mapSections,
@@ -29,7 +27,6 @@ import {
 import type { Brand } from "@/data/brands";
 import { STANDALONE_SECTIONS, type Section, type SubCategory, type SectionSlug } from "@/data/categories";
 import type { Product } from "@/data/products";
-import type { Article } from "@/data/blog";
 
 export interface Lead {
   id: string;
@@ -42,18 +39,29 @@ export interface Lead {
   date: string; // ISO
 }
 
+/** SAV (Service Après-Vente) — a customer claim submitted from /sav. */
+export interface Reclamation {
+  id: string;
+  name: string;
+  phone: string;
+  product: string;
+  serial: string;
+  message: string;
+  date: string; // ISO
+}
+
 export interface AdminData {
   /** False until the first Supabase fetch resolves (avoid "empty" flashes). */
   ready: boolean;
   brands: Brand[];
   sections: Section[];
   products: Product[];
-  /** Admin sees all articles (RLS); anonymous visitors only the published ones. */
-  articles: Article[];
   leads: Lead[];
+  /** SAV claims — admin-only (RLS); insertable anonymously from /sav. */
+  reclamations: Reclamation[];
 }
 
-const EMPTY: AdminData = { ready: false, brands: [], sections: [], products: [], articles: [], leads: [] };
+const EMPTY: AdminData = { ready: false, brands: [], sections: [], products: [], leads: [], reclamations: [] };
 
 /* ───────────────── Fetch + cache ───────────────── */
 
@@ -68,31 +76,33 @@ function notify() {
 async function fetchAll(): Promise<AdminData> {
   const sb = getSupabaseBrowser();
 
-  const [fams, subs, typs, brs, prods, arts] = await Promise.all([
+  const [fams, subs, typs, brs, prods] = await Promise.all([
     sb.from("families").select(SELECT_FAMILIES).order("sort_order"),
     sb.from("subcategories").select(SELECT_SUBCATEGORIES).order("sort_order"),
     sb.from("types").select(SELECT_TYPES).order("sort_order"),
     sb.from("brands").select(SELECT_BRANDS).order("sort_order").order("name"),
     sb.from("products").select(SELECT_PRODUCTS).order("created_at", { ascending: true }),
-    sb.from("articles").select(SELECT_ARTICLES).order("created_at", { ascending: false }),
   ]);
 
   const err = fams.error ?? subs.error ?? typs.error ?? brs.error ?? prods.error;
   if (err) throw new Error(err.message);
 
-  // Articles are soft-fail: a missing migration must not break the catalog.
-  if (arts.error) console.error("[store] articles indisponibles :", arts.error.message);
-
-  // Leads are admin-only (RLS) — a denied select just means "not logged in".
-  const leadsRes = await sb
-    .from("leads")
-    .select("id,name,email,phone,organization,product_name,created_at,product:products(slug)")
-    .order("created_at", { ascending: false });
+  // Leads + réclamations are admin-only (RLS) — a denied select just means
+  // "not logged in", so both soft-fail to an empty list.
+  const [leadsRes, recsRes] = await Promise.all([
+    sb
+      .from("leads")
+      .select("id,name,email,phone,organization,product_name,created_at,product:products(slug)")
+      .order("created_at", { ascending: false }),
+    sb
+      .from("reclamations")
+      .select("id,name,phone,product,serial,message,created_at")
+      .order("created_at", { ascending: false }),
+  ]);
 
   const brands = mapBrands(brs.data ?? []);
   const sections = mapSections(subs.data ?? [], typs.data ?? [], fams.data ?? []);
   const products = mapProducts(prods.data ?? []);
-  const articles = arts.error ? [] : mapArticles(arts.data ?? []);
 
   const leads: Lead[] = leadsRes.error
     ? []
@@ -107,7 +117,19 @@ async function fetchAll(): Promise<AdminData> {
         date: l.created_at,
       }));
 
-  return { ready: true, brands, sections, products, articles, leads };
+  const reclamations: Reclamation[] = recsRes.error
+    ? []
+    : (recsRes.data ?? []).map((r: any) => ({
+        id: r.id,
+        name: r.name,
+        phone: r.phone ?? "",
+        product: r.product ?? "",
+        serial: r.serial ?? "",
+        message: r.message ?? "",
+        date: r.created_at,
+      }));
+
+  return { ready: true, brands, sections, products, leads, reclamations };
 }
 
 async function refresh() {
@@ -326,32 +348,24 @@ export async function deleteType(sectionSlug: string, subSlug: string) {
   void revalidatePublic();
 }
 
-/* ───────────────── Articles (blog) ───────────────── */
+/* ───────────────── Réclamations (SAV) ───────────────── */
 
-export async function saveArticle(a: Article, originalSlug?: string) {
-  const sb = getSupabaseBrowser();
-  const row = {
-    slug: a.slug,
-    title: a.title,
-    description: a.body || null,
-    category: a.category || null,
-    image_url: a.cover || null,
-    pdf_url: a.pdf || null,
-    published: a.published ?? true,
-  };
-  const { error } = originalSlug
-    ? await sb.from("articles").update(row).eq("slug", originalSlug)
-    : await sb.from("articles").insert(row);
+export async function addReclamation(r: Omit<Reclamation, "id" | "date">) {
+  // Anonymous insert allowed by RLS (same model as leads).
+  const { error } = await getSupabaseBrowser().from("reclamations").insert({
+    name: r.name,
+    phone: r.phone,
+    product: r.product || null,
+    serial: r.serial || null,
+    message: r.message,
+  });
   fail(error);
-  await refresh();
-  void revalidatePublic();
 }
 
-export async function deleteArticle(slug: string) {
-  const { error } = await getSupabaseBrowser().from("articles").delete().eq("slug", slug);
+export async function deleteReclamation(id: string) {
+  const { error } = await getSupabaseBrowser().from("reclamations").delete().eq("id", id);
   fail(error);
   await refresh();
-  void revalidatePublic();
 }
 
 /* ───────────────── Leads ───────────────── */
@@ -381,4 +395,4 @@ export async function deleteLead(leadId: string) {
   await refresh();
 }
 
-export type { Product, Brand, Section, SubCategory, Article };
+export type { Product, Brand, Section, SubCategory };

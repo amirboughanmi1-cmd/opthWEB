@@ -7,7 +7,7 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 /**
  * Anonymous server client — public reads on server-rendered pages
- * (home, catalogue, produits/[slug], blog, optique, occasion).
+ * (home, catalogue, produits/[slug], optique, occasion, sav).
  * Same RLS visibility as a visitor; no session persistence needed.
  */
 export function getSupabaseServer(): SupabaseClient {

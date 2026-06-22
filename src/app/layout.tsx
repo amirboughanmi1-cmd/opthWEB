@@ -63,7 +63,10 @@ export const revalidate = 3600;
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const { sections } = await getCatalog();
   return (
-    <html lang="fr" className={`${hanken.variable} ${jetbrains.variable}`}>
+    // suppressHydrationWarning: browser extensions (e.g. crypto wallets) inject
+    // attributes onto <html> before React hydrates — ignore mismatches on THIS
+    // element only (does not cascade to the app's own markup).
+    <html lang="fr" className={`${hanken.variable} ${jetbrains.variable}`} suppressHydrationWarning>
       <head>
         {/* Speed up first image load from the ImageKit CDN (improves LCP). */}
         <link rel="preconnect" href="https://ik.imagekit.io" crossOrigin="" />

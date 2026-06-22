@@ -13,7 +13,6 @@
 import type { Brand } from "@/data/brands";
 import type { Section, SubCategory, SectionSlug } from "@/data/categories";
 import type { Product } from "@/data/products";
-import type { Article } from "@/data/blog";
 
 export const SELECT_FAMILIES = "slug,name,description,sort_order";
 export const SELECT_SUBCATEGORIES = "id,slug,name,description,sort_order";
@@ -22,7 +21,6 @@ export const SELECT_BRANDS = "slug,name,logo_url,sort_order,is_partner";
 export const SELECT_PRODUCTS =
   "slug,name,image_url,images,hero_image,brochure_url,tagline,description,featured,created_at," +
   "family:families(slug),subcategory:subcategories(slug),type:types(slug),brand:brands(slug,name)";
-export const SELECT_ARTICLES = "slug,title,description,category,image_url,pdf_url,published,created_at";
 
 /** "Section A/B/C" labels from the cahier des charges (not stored in DB). */
 const SECTION_LABELS: Record<string, string> = {
@@ -65,27 +63,6 @@ export function mapSections(subs: any[], typs: any[], fams: any[]): Section[] {
     });
   }
   return sections;
-}
-
-/** Card excerpt = first sentence-ish chunk of the description (word boundary). */
-function excerptOf(text: string): string {
-  if (text.length <= 180) return text;
-  const cut = text.slice(0, 180);
-  return `${cut.slice(0, cut.lastIndexOf(" "))}…`;
-}
-
-export function mapArticles(rows: any[]): Article[] {
-  return rows.map((a) => ({
-    slug: a.slug,
-    title: a.title,
-    excerpt: excerptOf(a.description ?? ""),
-    body: a.description ?? "",
-    category: a.category ?? "Actualités",
-    date: a.created_at,
-    cover: a.image_url ?? "",
-    pdf: a.pdf_url ?? undefined,
-    published: !!a.published,
-  }));
 }
 
 export function mapProducts(rows: any[]): Product[] {

@@ -8,7 +8,6 @@
 import type { Product } from "@/data/products";
 import type { Brand } from "@/data/brands";
 import type { Section } from "@/data/categories";
-import type { Article } from "@/data/blog";
 import { STANDALONE_SECTIONS } from "@/data/categories";
 
 /** Accent- and case-insensitive comparison key ("Unité" → "unite"). */
@@ -25,7 +24,7 @@ export function matchesProduct(p: Product, query: string): boolean {
   return normalize(`${p.name} ${p.brandName ?? ""} ${p.taglineFr}`).includes(nq);
 }
 
-export type SearchHitType = "Produit" | "Catégorie" | "Marque" | "Article" | "Page";
+export type SearchHitType = "Produit" | "Catégorie" | "Marque" | "Page";
 
 export interface SearchHit {
   type: SearchHitType;
@@ -45,7 +44,7 @@ const PAGES: { title: string; href: string; text: string }[] = [
   { title: "Catalogue", href: "/catalogue", text: "catalogue produits equipements ophtalmologie consultation exploration chirurgie" },
   { title: "Optique", href: "/optique", text: "optique montures verres meuleuse atelier monteur" },
   { title: "Occasion", href: "/occasion", text: "occasion seconde main reconditionne materiel usage" },
-  { title: "Blog", href: "/blog", text: "blog actualites articles innovation conseils cliniques" },
+  { title: "SAV — Service Après-Vente", href: "/sav", text: "sav service apres vente reclamation reparation garantie panne probleme numero serie support technique" },
 ];
 
 const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -76,7 +75,6 @@ export interface SearchableData {
   products: Product[];
   sections: Section[];
   brands: Brand[];
-  articles: Article[];
 }
 
 export function searchAll(data: SearchableData, query: string): SearchHit[] {
@@ -142,24 +140,6 @@ export function searchAll(data: SearchableData, query: string): SearchHit[] {
         subtitle: "Voir les produits de la marque",
         href: `/catalogue?brand=${b.slug}`,
         image: b.logo ?? undefined,
-        score: s,
-      });
-    }
-  }
-
-  for (const a of data.articles) {
-    const s = score(tokens, [
-      { text: a.title, weight: 90 },
-      { text: a.category, weight: 50 },
-      { text: a.body || a.excerpt, weight: 20 },
-    ]);
-    if (s) {
-      hits.push({
-        type: "Article",
-        title: a.title,
-        subtitle: a.excerpt,
-        href: `/blog/${a.slug}`,
-        image: a.cover || undefined,
         score: s,
       });
     }

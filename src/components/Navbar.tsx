@@ -28,7 +28,7 @@ const SearchResults = dynamic(
 const navLinks = [
   { href: "/optique", label: t("optique") },
   { href: "/occasion", label: t("occasion") },
-  { href: "/blog", label: t("blog") },
+  { href: "/sav", label: t("sav") },
   { href: "/a-propos", label: t("about") },
 ];
 

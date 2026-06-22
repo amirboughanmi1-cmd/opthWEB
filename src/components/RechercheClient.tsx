@@ -9,12 +9,11 @@ import { searchAll, type SearchHit, type SearchHitType } from "@/lib/search";
 import { PageHeader } from "./PageHeader";
 import { ArrowRight, SearchIcon } from "./Icons";
 
-const GROUP_ORDER: SearchHitType[] = ["Produit", "Catégorie", "Marque", "Article", "Page"];
+const GROUP_ORDER: SearchHitType[] = ["Produit", "Catégorie", "Marque", "Page"];
 const GROUP_LABELS: Record<SearchHitType, string> = {
   Produit: "Produits",
   Catégorie: "Catégories",
   Marque: "Marques",
-  Article: "Articles",
   Page: "Pages",
 };
 
@@ -43,7 +42,7 @@ export function RechercheClient() {
       <PageHeader
         eyebrow="Recherche"
         title={q ? `Résultats pour « ${q} »` : "Recherche"}
-        subtitle="Produits, catégories, marques, articles et pages du site."
+        subtitle="Produits, catégories, marques et pages du site."
       />
 
       <div className="container-max max-w-3xl py-12">
@@ -53,7 +52,7 @@ export function RechercheClient() {
           <input
             type="search"
             autoFocus={!q}
-            placeholder="Rechercher un produit, une marque, un article…"
+            placeholder="Rechercher un produit, une marque, une catégorie…"
             aria-label="Rechercher sur le site"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
