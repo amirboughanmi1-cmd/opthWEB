@@ -19,6 +19,9 @@ export function SavView({ products }: { products: string[] }) {
   // Honeypot: hidden from humans, auto-filled by bots → drop the submission.
   const [website, setWebsite] = useState("");
   const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
+  // "Produit concerné" uses a native <select> (reliable on mobile, unlike
+  // <datalist>); this flag reveals a free-text input for "Autre / non listé".
+  const [otherProduct, setOtherProduct] = useState(false);
 
   const set = (k: keyof typeof form, v: string) => setForm((f) => ({ ...f, [k]: v }));
 
@@ -89,18 +92,36 @@ export function SavView({ products }: { products: string[] }) {
                   />
                 </Field>
                 <Field label="Produit concerné">
-                  <input
+                  <select
                     className={inputCls}
-                    list="sav-products"
-                    placeholder="Nom de l'appareil"
-                    value={form.product}
-                    onChange={(e) => set("product", e.target.value)}
-                  />
-                  <datalist id="sav-products">
+                    value={otherProduct ? "__other__" : form.product}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      if (v === "__other__") {
+                        setOtherProduct(true);
+                        set("product", "");
+                      } else {
+                        setOtherProduct(false);
+                        set("product", v);
+                      }
+                    }}
+                  >
+                    <option value="">— Sélectionner un produit —</option>
                     {products.map((p) => (
-                      <option key={p} value={p} />
+                      <option key={p} value={p}>
+                        {p}
+                      </option>
                     ))}
-                  </datalist>
+                    <option value="__other__">Autre / non listé…</option>
+                  </select>
+                  {otherProduct && (
+                    <input
+                      className={`${inputCls} mt-2`}
+                      placeholder="Précisez le produit concerné"
+                      value={form.product}
+                      onChange={(e) => set("product", e.target.value)}
+                    />
+                  )}
                 </Field>
                 <Field label="Numéro de série">
                   <input
