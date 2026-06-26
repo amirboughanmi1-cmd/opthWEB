@@ -12,7 +12,7 @@ export default function OptiquePage() {
     <SectionProductsView
       section="optique"
       title={t("optique")}
-      subtitle="Notre offre Optique (montures, verres et accessoires) sera bientôt disponible sur cette page. En attendant, notre équipe reste à votre disposition pour toute demande."
+      subtitle="Découvrez notre sélection d'équipements et d'accessoires d'optique conçus pour répondre aux besoins des professionnels de la vision. Nous proposons des solutions fiables, performantes et innovantes pour les magasins d'optique."
       icon="eye"
     />
   );
