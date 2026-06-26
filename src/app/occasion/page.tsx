@@ -12,7 +12,7 @@ export default function OccasionPage() {
     <SectionProductsView
       section="occasion"
       title={t("occasion")}
-      subtitle="Vous recherchez un équipement ophtalmologique d'occasion ou souhaitez vendre le vôtre ? Profitez de notre plateforme spécialisée pour acheter et vendre en toute confiance. Contactez-nous dès aujourd'hui pour publier votre annonce ou trouver l'équipement qu'il vous faut."
+      subtitle="Découvrez notre sélection d'équipements et d'accessoires d'optique conçus pour répondre aux besoins des professionnels de la vision. Nous proposons des solutions fiables, performantes et innovantes pour les magasins d'optique."
       icon="tag"
     />
   );
