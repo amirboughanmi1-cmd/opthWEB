@@ -12,7 +12,7 @@ export default function OccasionPage() {
     <SectionProductsView
       section="occasion"
       title={t("occasion")}
-      subtitle="ent ophtalmologique d'occasion ou souhaitez vendre le vôtre ? Profitez de notre plateforme spécialisée pour acheter et vendre en toute confiance. Contactez-nous dès aujourd'hui pour publier votre annonce ou trouver l'équipement qu'il vous faut."
+      subtitle="Vous recherchez un équipement ophtalmologique d'occasion ou souhaitez vendre le vôtre ? Profitez de notre plateforme spécialisée pour acheter et vendre en toute confiance. Contactez-nous dès aujourd'hui pour publier votre annonce ou trouver l'équipement qu'il vous faut."
       icon="tag"
     />
   );
