@@ -26,10 +26,11 @@ export function BrochureModal({ productName, productSlug, brochure, open, onClos
   // Honeypot: a field hidden from humans. Bots auto-fill every input, so a
   // non-empty value means "robot" → we drop the submission silently.
   const [website, setWebsite] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   if (!open) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     // Spam bot detected — pretend success, record nothing.
@@ -38,14 +39,29 @@ export function BrochureModal({ productName, productSlug, brochure, open, onClos
       return;
     }
 
-    // 1. Record the lead in Supabase (anonymous insert allowed by RLS).
-    //    Fire-and-forget: a lead failure must never block the download.
-    void addLead({ ...form, productSlug, productName }).catch((err) =>
-      console.error("[lead] insert failed:", err)
-    );
+    setSubmitting(true);
 
-    // 2. Trigger the automatic download of the brochure.
-    const href = brochure || DEFAULT_BROCHURE;
+    // 1. Record the lead in Supabase (anonymous insert allowed by RLS).
+    //    Awaited with one retry so a transient failure can't silently lose the
+    //    lead — recording the contact is the whole point of the form.
+    try {
+      await addLead({ ...form, productSlug, productName });
+    } catch (err) {
+      console.error("[lead] insert failed, retrying once:", err);
+      try {
+        await addLead({ ...form, productSlug, productName });
+      } catch (err2) {
+        console.error("[lead] retry failed — lead not recorded:", err2);
+      }
+    }
+
+    // 2. Trigger the brochure download. ImageKit is a different origin, so the
+    //    <a download> attribute is ignored — `ik-attachment=true` forces the
+    //    download instead of opening the PDF in the browser.
+    const base = brochure || DEFAULT_BROCHURE;
+    const href = base.includes("ik.imagekit.io")
+      ? base + (base.includes("?") ? "&" : "?") + "ik-attachment=true"
+      : base;
     const a = document.createElement("a");
     a.href = href;
     a.download = `Brochure-${productName.replace(/\s+/g, "-")}.pdf`;
@@ -53,6 +69,7 @@ export function BrochureModal({ productName, productSlug, brochure, open, onClos
     a.click();
     a.remove();
 
+    setSubmitting(false);
     setSubmitted(true);
   };
 
@@ -135,9 +152,9 @@ export function BrochureModal({ productName, productSlug, brochure, open, onClos
                 onChange={(e) => setWebsite(e.target.value)}
               />
             </div>
-            <button type="submit" className="btn-solid mt-2 w-full">
+            <button type="submit" disabled={submitting} className="btn-solid mt-2 w-full disabled:opacity-60">
               <DownloadIcon className="h-5 w-5" />
-              {t("downloadBrochure")}
+              {submitting ? "Envoi…" : t("downloadBrochure")}
             </button>
           </form>
         )}
