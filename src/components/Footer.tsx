@@ -38,7 +38,7 @@ export function Footer() {
             <p>
               {t("developedBy")}{" "}
               <a
-                href="https://www.instagram.com/hamzaamiri_officiel/"
+                href="https://www.instagram.com/nerovex_company/"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="font-medium text-on-surface-variant underline decoration-dotted underline-offset-2 transition-colors hover:text-primary-container"
