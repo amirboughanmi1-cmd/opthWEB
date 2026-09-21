@@ -38,7 +38,6 @@ export function MapEmbed({ title = "Localisation OphtaHealth" }: { title?: strin
     >
       <LocationIcon className="h-10 w-10 text-primary-container transition-transform group-hover:scale-110" />
       <span className="font-medium text-primary-container">Afficher la carte</span>
-      <span className="text-sm">{site.address}</span>
     </button>
   );
 }

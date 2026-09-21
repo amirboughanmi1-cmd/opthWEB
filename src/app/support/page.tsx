@@ -3,7 +3,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { Accordion, type QA } from "@/components/Accordion";
 import { MapEmbed } from "@/components/MapEmbed";
 import { site, whatsappLink } from "@/lib/site";
-import { PhoneIcon, MailIcon, LocationIcon, WhatsAppIcon } from "@/components/Icons";
+import { PhoneIcon, MailIcon, WhatsAppIcon } from "@/components/Icons";
 
 export const metadata: Metadata = {
   title: "Contact & Support",
@@ -68,10 +68,6 @@ export default function SupportPage() {
           </div>
           <div>
             <h2 className="mb-6 font-display text-headline-md text-primary-container">Nous rendre visite</h2>
-            <p className="mb-4 flex items-center gap-2 text-on-surface-variant">
-              <LocationIcon className="h-5 w-5 text-primary-container" />
-              {site.address}
-            </p>
             <div className="h-[320px] overflow-hidden rounded-lg border border-outline-variant">
               <MapEmbed />
             </div>
