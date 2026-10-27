@@ -8,6 +8,7 @@ import { CookieBanner } from "@/components/CookieBanner";
 import { site } from "@/lib/site";
 import { SITE_URL } from "@/lib/site-url";
 import { getCatalog } from "@/lib/server-data";
+import { businessJsonLd } from "@/lib/structured-data";
 
 const hanken = Hanken_Grotesk({
   subsets: ["latin"],
@@ -26,11 +27,11 @@ const jetbrains = JetBrains_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: `${site.name}`,
+    default: `${site.name} — Équipements ophtalmiques en Tunisie`,
     template: `%s — ${site.name}`,
   },
   description:
-    "OphtaHealth distribue des équipements médicaux ophtalmiques de haute précision : consultation, exploration et santé oculaire. 9 marques partenaires de renom.",
+    "OphtaHealth distribue en Tunisie des équipements médicaux ophtalmiques de haute précision : consultation, exploration et santé oculaire. 9 marques partenaires de renom.",
   keywords: [
     "ophtalmologie",
     "équipement médical",
@@ -39,12 +40,15 @@ export const metadata: Metadata = {
     "rétinographe",
     "tonomètre",
     "OphtaHealth",
+    "matériel ophtalmologique Tunisie",
+    "équipement ophtalmologie Tunis",
   ],
   openGraph: {
-    title: `${site.name} — Équipements Médicaux Ophtalmiques`,
-    description: "Catalogue d'équipements ophtalmiques de haute précision.",
+    title: `${site.name} — Équipements Médicaux Ophtalmiques en Tunisie`,
+    description: "Catalogue d'équipements ophtalmiques de haute précision, distribués en Tunisie.",
     type: "website",
-    locale: "fr_FR",
+    locale: "fr_TN",
+    siteName: site.name,
     // public/ is empty — the logo lives on ImageKit (absolute URL required by OG anyway).
     images: ["https://ik.imagekit.io/rntjotcwu/brand/ophtahealth-logo.webp?tr=w-1200"],
   },
@@ -66,11 +70,16 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     // suppressHydrationWarning: browser extensions (e.g. crypto wallets) inject
     // attributes onto <html> before React hydrates — ignore mismatches on THIS
     // element only (does not cascade to the app's own markup).
-    <html lang="fr" className={`${hanken.variable} ${jetbrains.variable}`} suppressHydrationWarning>
+    <html lang="fr-TN" className={`${hanken.variable} ${jetbrains.variable}`} suppressHydrationWarning>
       <head>
         {/* Speed up first image load from the ImageKit CDN (improves LCP). */}
         <link rel="preconnect" href="https://ik.imagekit.io" crossOrigin="" />
         <link rel="dns-prefetch" href="https://ik.imagekit.io" />
+        {/* Local-SEO structured data (Tunisian business) — not rendered visibly. */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(businessJsonLd) }}
+        />
       </head>
       <body className="bg-clinical-white font-sans text-body-md text-on-surface antialiased">
         <Navbar sections={sections} />

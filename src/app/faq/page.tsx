@@ -6,7 +6,7 @@ import { Accordion, type QA } from "@/components/Accordion";
 export const metadata: Metadata = {
   title: "FAQ",
   description:
-    "Foire aux questions OphtaHealth : calibration, support technique, livraison et maintenance des équipements ophtalmiques.",
+    "Foire aux questions OphtaHealth : calibration, support technique, livraison et maintenance des équipements ophtalmiques en Tunisie.",
 };
 
 const calibration: QA[] = [

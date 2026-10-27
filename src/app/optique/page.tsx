@@ -4,7 +4,7 @@ import { t } from "@/i18n/ui";
 
 export const metadata: Metadata = {
   title: "Optique",
-  description: "Montures, verres et accessoires optiques proposés par OphtaHealth.",
+  description: "Montures, verres et accessoires optiques proposés par OphtaHealth en Tunisie.",
 };
 
 export default function OptiquePage() {

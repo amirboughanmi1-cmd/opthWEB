@@ -27,8 +27,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const product = products.find((p) => p.slug === slug);
   if (!product) return { title: "Produit introuvable" };
   return {
-    title: product.name,
-    description: product.taglineFr,
+    title: `${product.name} en Tunisie`,
+    // "Tunisie" lands in the search snippet only, not on the page.
+    description: `${product.taglineFr.trim().replace(/[.\s]*$/, ".")} Disponible en Tunisie chez OphtaHealth.`,
   };
 }
 

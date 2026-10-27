@@ -8,7 +8,7 @@ import { PhoneIcon, MailIcon, WhatsAppIcon } from "@/components/Icons";
 export const metadata: Metadata = {
   title: "Contact & Support",
   description:
-    "Contactez l'équipe OphtaHealth pour toute demande d'information, devis ou support technique sur nos équipements ophtalmiques.",
+    "Contactez l'équipe OphtaHealth pour toute demande d'information, devis ou support technique sur nos équipements ophtalmiques, partout en Tunisie.",
 };
 
 const faq: QA[] = [

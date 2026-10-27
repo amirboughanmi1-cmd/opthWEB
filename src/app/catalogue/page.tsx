@@ -6,7 +6,7 @@ import { getCatalog } from "@/lib/server-data";
 export const metadata: Metadata = {
   title: "Catalogue",
   description:
-    "Parcourez le catalogue complet des équipements ophtalmiques OphtaHealth : consultation, exploration et santé oculaire. Filtrez par section, catégorie, marque et disponibilité.",
+    "Parcourez le catalogue complet des équipements ophtalmiques OphtaHealth en Tunisie : consultation, exploration et santé oculaire. Filtrez par section, catégorie, marque et disponibilité.",
 };
 
 /** ISR safety net — the admin dashboard revalidates on-demand after writes. */

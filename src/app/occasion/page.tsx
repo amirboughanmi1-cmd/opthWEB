@@ -4,7 +4,7 @@ import { t } from "@/i18n/ui";
 
 export const metadata: Metadata = {
   title: "Occasion",
-  description: "Équipements d'occasion reconditionnés et matériel de seconde main d'OphtaHealth.",
+  description: "Équipements d'occasion reconditionnés et matériel ophtalmique de seconde main d'OphtaHealth en Tunisie.",
 };
 
 export default function OccasionPage() {

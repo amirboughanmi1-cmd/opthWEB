@@ -10,7 +10,7 @@ import { t } from "@/i18n/ui";
 export const metadata: Metadata = {
   title: "À Propos",
   description:
-    "OphtaHealth, distributeur d'équipements médicaux ophtalmiques. Notre mission, nos valeurs et nos marques partenaires de renom.",
+    "OphtaHealth, distributeur d'équipements médicaux ophtalmiques en Tunisie. Notre mission, nos valeurs et nos marques partenaires de renom.",
 };
 
 const values = [

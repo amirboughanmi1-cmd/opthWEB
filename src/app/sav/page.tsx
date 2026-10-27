@@ -5,7 +5,7 @@ import { SavView } from "@/components/SavView";
 export const metadata: Metadata = {
   title: "SAV — Service Après-Vente",
   description:
-    "Service Après-Vente OphtaHealth : signalez une réclamation, une panne ou une demande de réparation sur votre équipement. Notre équipe technique vous recontacte.",
+    "Service Après-Vente OphtaHealth : signalez une réclamation, une panne ou une demande de réparation sur votre équipement. Notre équipe technique en Tunisie vous recontacte.",
 };
 
 /** ISR — the product list feeding the form's autocomplete comes from Supabase. */
